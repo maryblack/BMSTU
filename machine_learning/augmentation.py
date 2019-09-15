@@ -1,5 +1,4 @@
-from skimage.transform import rotate
-from matplotlib import pyplot as plt
+import os
 import cv2
 import numpy as np
 
@@ -7,8 +6,6 @@ import numpy as np
 class Image():
     def __init__(self, image):
         self.image = image
-        self.titles = ['ImgInit']
-        self.imgs = [image]
 
     def rotation(self, angle):
         """
@@ -16,14 +13,14 @@ class Image():
         :param angle: угол
         :return: экземпляр класса Image
         """
-        new_pic = rotate(self.image, angle)
-        self.titles.append('ImgRotate')
-        self.imgs.append(new_pic)
-        cv2.imshow('ImgRotate', new_pic)
-        plt.show()
+        rows, cols = self.image.shape[:2]
+
+        M = cv2.getRotationMatrix2D((cols / 2, rows / 2), angle, 1)
+        new_pic = cv2.warpAffine(self.image, M, (cols, rows))
+        cv2.imwrite('augmentation/ImgRotate.png', new_pic)
         return Image(new_pic)
 
-    def translation(self, dst_x: int, dst_y:int):
+    def translation(self, dst_x: int, dst_y: int):
         """
         Смещение изображения
         :param dst_x: по оси х
@@ -33,8 +30,7 @@ class Image():
         rows, cols = self.image.shape[:2]
         M = np.float32([[1, 0, dst_x], [0, 1, dst_y]])
         new_pic = cv2.warpAffine(self.image, M, (cols, rows))
-        cv2.imshow('ImgTranslation', new_pic)
-        plt.show()
+        cv2.imwrite('augmentation/ImgTranslation.png', new_pic)
         return Image(new_pic)
 
     def compression(self, fx, fy):
@@ -44,9 +40,8 @@ class Image():
         :param fy: по оси y
         :return: экземпляр класса Image
         """
-        new_pic = cv2.resize(self.image,None,fx=fx, fy=fy, interpolation = cv2.INTER_CUBIC)
-        cv2.imshow('ImgResize', new_pic)
-        plt.show()
+        new_pic = cv2.resize(self.image, None, fx=fx, fy=fy, interpolation=cv2.INTER_CUBIC)
+        cv2.imwrite('augmentation/ImgResize.png', new_pic)
         return Image(new_pic)
 
     def symmetry(self, code):
@@ -56,30 +51,26 @@ class Image():
         :return:
         """
         new_pic = cv2.flip(self.image, code)
-        cv2.imshow('ImgFlip', new_pic)
-        plt.show()
+        cv2.imwrite('augmentation/ImgFlip.png', new_pic)
         return Image(new_pic)
 
 
-
 def main():
-    filename = 'wilfred.png'
+    # filename = 'wilfred.png'
+    try:
+        os.mkdir('augmentation')
+    except FileExistsError:
+        pass
+    filename = 'pic.png'
     img = cv2.imread(filename)
     im = Image(img)
-    im.\
-        rotation(45).\
-        translation(100, 10).\
-        compression(0.5,1.5).\
-        symmetry(0).\
+    # задаем последовательность операций над изображением
+    fin = im. \
+        rotation(30). \
+        translation(100, 10). \
+        compression(0.5, 1). \
         symmetry(-1)
-    cv2.imshow('ImageInit', im.image)
-    # final = cv2.hconcat([im.image, res.image])
-    # cv2.imshow('fin', final)
-    # cv2.imwrite("./debug.png", final)
-    # fin = cv2.hconcat(im.imgs)
-    # cv2.imwrite("fin.png", fin)
-    cv2.waitKey()
-    plt.show()
+    cv2.imwrite('augmentation/ImgFinal.png', fin.image)
 
 
 if __name__ == '__main__':

@@ -1,22 +1,22 @@
 import pandas as pd
 
 def simplex_init(F, cond, b, opt: str):
-    if opt == 'max':
-        F_0 = [-el for el in F]
-    else:
-        F_0 = F
+    F_0 = [-el for el in F]
     m = len(cond)
     n = len(cond[0])
+    cond1 = []
+    for i in range(m):
+        cond1.append([-el for el in cond[i]])
     for i in range(m):
         F_0.append(0)
         for j in range(m):
             if i == j:
-                cond[i].append(1)
+                cond1[i].append(1)
             else:
-                cond[i].append(0)
+                cond1[i].append(0)
 
     # return F_0, m, n
-    return cond, F_0
+    return cond1, F_0
 
 
 def column(matrix, j):
@@ -51,6 +51,7 @@ def print_matrix(matrix, F, b):
     ind.append('F')
     # print(column(matrix,3))
     col = len(matrix[0])
+    base = len(matrix)
     columns = []
     for i in range(col):
         columns.append(f'x{i+1}')
@@ -70,7 +71,7 @@ def main():
             [-3, -2, 17],
             [-1, -1, 3]
             ]
-    b = [-23, -33, -12]
+    b = [-23, 33, -12]
     matrix, F = simplex_init(F, cond, b, opt[1])
     print_matrix(matrix, F, b)
 
