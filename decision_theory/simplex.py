@@ -1,5 +1,6 @@
 import pandas as pd
-
+import numpy as np
+from copy import deepcopy
 
 
 class Simplex:
@@ -14,10 +15,10 @@ class Simplex:
         self.basis = list(range(n, n + m))
 
     def simplex_matrix(self, A, b, c):
-        c_0 = [-el for el in c]
+        c_0 = [el for el in c]
         A_0 = []
         for i in range(len(A)):
-            A_0.append([-el for el in A[i]])
+            A_0.append([el for el in A[i]])
         # нужно ли делать отрицательной матрицу А?
         col = len(A[0])
         columns = []
@@ -28,32 +29,34 @@ class Simplex:
         b.append(0)
         df.insert(0, 'b', b)
         # print(df)
-        m = df.to_numpy()
+        m = df.to_numpy(dtype=np.float64)
         return m
 
     def change_basis(self, r, k):
-        new_k = self.free[r]
+        old_matrix = deepcopy(self.matrix)
+        new_k = self.free[r-1]
         new_r = self.basis[k]
         self.basis[k] = new_k
-        self.free[r] = new_r
-        s_rk = 1 / self.matrix[k][r]
+        self.free[r-1] = new_r
+        s_rk = float(1 / old_matrix[k][r])
+        self.matrix[k][r] = s_rk
         m = len(self.matrix)
         n = len(self.matrix[0])
 
         for j in range(m):
             if j != k:
-                new_val = self.matrix[j][r]/s_rk
-                self.matrix[j][r] = new_val
+                new_val = float(old_matrix[j][r]*s_rk)
+                self.matrix[j][r] = -new_val
 
         for i in range(n):
             if i != r:
-                new_val = self.matrix[k][i]/s_rk
+                new_val = float(old_matrix[k][i]*s_rk)
                 self.matrix[k][i] = new_val
 
         for j in range(m):
             for i in range(n):
                 if j != k and i != r:
-                    new_val = self.matrix[j][i] - self.matrix[k][i] * self.matrix[j][r]/ s_rk
+                    new_val = float(old_matrix[j][i] - old_matrix[k][i] * old_matrix[j][r]*s_rk)
                     self.matrix[j][i] = new_val
 
 
@@ -62,16 +65,17 @@ class Simplex:
     def accept_solution(self):
         na = self.na_row()
         while na < (len(self.b)+1):
+            # print(r)
             r = self.a_solving_col(na)
-            print(r)
             if r < len(self.c)+1:
-                k = self.a_solving_row(na, r)
+                k = self.a_solving_row(r)
                 self.change_basis(r, k)
                 na = self.na_row()
+                # r = self.a_solving_col(na)
             else:
                 na = len(self.b) + 1
-        free_str = [f'x{el}' for el in self.free]
-        basis_str = [f'x{el}' for el in self.basis]
+        free_str = [f'x{el+1}' for el in self.free]
+        basis_str = [f'x{el+1}' for el in self.basis]
         b_0 = column(self.matrix,0)[:-1]
         F = column(self.matrix,0)[-1]
 
@@ -83,43 +87,66 @@ class Simplex:
 
 
     def optimal_solution(self):
-        pass
+        no_col = self.no_col()
+        while no_col < (len(self.c) + 1):
+            k = self.a_solving_row(no_col)
+            if k < len(self.b)+1:
+                # k = self.a_solving_row(no_col)
+                self.change_basis(no_col, k)
+                no_col = self.no_col()
+            else:
+                no_col = len(self.c) + 1
+
+
+
+        free_str = [f'x{el+1}' for el in self.free]
+        basis_str = [f'x{el+1}' for el in self.basis]
+        b_0 = column(self.matrix, 0)[:-1]
+        F = column(self.matrix, 0)[-1]
+        answer = f"Оптимальное решение: {', '.join(free_str)}=0\n" \
+            f"{', '.join([basis_str[i] + '=' + str(b_0[i]) for i in range(len(basis_str))])}\nF={F}"
+
+        return answer
 
     def na_row(self):
-        for i in range(len(self.b)):
-            if self.b[i] < 0:
+        b_0 = column(self.matrix,0)[:-1]
+        for i in range(len(b_0)):
+            if b_0[i] < 0:
                 return i
-        return len(self.b)+1 # значит нет отрицательных значений в столбце
+        return len(b_0)+2 # значит нет отрицательных значений в столбце
+
 
     def a_solving_col(self, k):
         row = self.matrix[k][1:]
         for i in range(len(row)):
             if row[i] < 0:
                 return i + 1
-        return len(row) + 1  # значит нет отрицательных значений в строке
+        return len(row) + 2  # значит нет отрицательных значений в строке
 
-    def a_solving_row(self, na, r):
-        b_0 = self.b[:-1]
+    def a_solving_row(self, r):
+        b_0 = column(self.matrix, 0)[:-1]
         ind = 0
         min = max(b_0) # ищем положительный минимум
-        sol_col = column(self.matrix, r)
+        sol_col = column(self.matrix, r)[:-1]
+        # что делать с делением на 0?
         for i in range(len(b_0)):
-            s = b_0[i]/sol_col[i]
+            if sol_col[i] != 0:
+                s = b_0[i]/sol_col[i]
+            else:
+                s = sol_col[i]
             if s > 0 and s < min:
                 min = s
                 ind = i
         return ind
 
 
-    def o_solving_col(self):
-        for i in range(len(self.c)):
-            if self.c[i] < 0:
+    def no_col(self):
+        F = self.matrix[-1]
+        for i in range(len(F)):
+            # if F[i] < 0:
+            if F[i] > 0:
                 return i
-        return len(self.c)+1 # значит нет отрицательных значений в строке
-
-
-
-
+        return len(F)+1 # значит нет отрицательных значений в строке
 
 
 
@@ -135,17 +162,25 @@ def column(matrix, j):
 
 
 def main():
-    c = [7, 5, 3]
-    A = [[4, 1, 1],
-        [1, 2, 0],
-        [0, 0.5, 1]
-        ]
-    b = [4, 3, 2]
+    # c = [7, 5, 3]
+    # A = [[4, 1, 1],
+    #     [1, 2, 0],
+    #     [0, 0.5, 1]
+    #     ]
+    # b = [4, 3, 2]
+    #
+    c = [1, -1] # пример из лекции
+    A = [[1, -2],
+         [-2, 1],
+         [1, 1]
+         ]
+    b = [2, -2, 5]
     solution = Simplex(A, b, c)
     print(solution.matrix)
     # print(f'free: {solution.free}')
     # print(f'basis: {solution.basis}')
     print(solution.accept_solution())
+    print(solution.optimal_solution())
 
     # matrix, F = simplex_init(c, A, b, opt[1])
     # print_matrix(matrix, F, b)
