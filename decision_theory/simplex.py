@@ -65,6 +65,7 @@ class Simplex:
 
     def accept_solution(self):
         na = self.na_row()
+        ind_sol = 0
         while na < (len(self.b)+1):
             # print(r)
             k = self.a_solving_col(na)
@@ -73,23 +74,33 @@ class Simplex:
                 self.change_basis(r, k)
                 na = self.na_row()
                 # r = self.a_solving_col(na)
+                ind_sol += 1
             else:
+                ind_sol = -1
                 na = len(self.b) + 1
-        free_str = [f'x{el+1}' for el in self.free]
-        basis_str = [f'x{el+1}' for el in self.basis]
-        b_0 = column(self.matrix,0)[:-1]
-        F = column(self.matrix,0)[-1]
-        new_line = '='*30
 
-        answer = f"Опорное решение: {', '.join(free_str)}=0\n" \
-            f"{', '.join([basis_str[i]+'='+str(b_0[i]) for i in range(len(basis_str))])}\nF={F}"
+        if ind_sol >= 0:
+            free_str = [f'x{el+1}' for el in self.free]
+            basis_str = [f'x{el+1}' for el in self.basis]
+            b_0 = column(self.matrix,0)[:-1]
+            F = column(self.matrix,0)[-1]
 
-        return answer
+            answer = f"Опорное решение: {', '.join(free_str)}=0\n" \
+                f"{', '.join([basis_str[i]+'='+str(b_0[i]) for i in range(len(basis_str))])}\nF={F}"
+
+            return answer
+        else:
+            return 'Допустимых решений нет!'
 
 
 
     def optimal_solution(self):
+        str = self.accept_solution()
+        print(str)
+        if str == 'Допустимых решений нет!':
+            return 'И значит оптимального нет!'
         no_col = self.no_col()
+        iter = 0
         while no_col < (len(self.c) + 1):
             r = self.a_solving_row(no_col)
             if r < len(self.b)+1:
@@ -98,6 +109,10 @@ class Simplex:
                 no_col = self.no_col()
             else:
                 no_col = len(self.c) + 1
+            iter += 1
+
+        if iter == 0:
+            print('')
 
 
 
@@ -109,8 +124,12 @@ class Simplex:
         else:
             F = - column(self.matrix, 0)[-1]
         new_line = '=' * 30
+        solution = []
+        for i in range(len(basis_str)):
+            sol = f'{basis_str[i]}={b_0[i]}'
+            solution.append(sol)
         answer = f"Оптимальное решение: {', '.join(free_str)}=0\n" \
-            f"{', '.join([basis_str[i] + '=' + str(b_0[i]) for i in range(len(basis_str))])}\nF={F}\n{new_line}"
+            f"{', '.join(solution)}\nF={F}\n{new_line}"
 
         return answer
 
@@ -169,7 +188,7 @@ def column(matrix, j):
 def simplex_method(A, b, c, opt):
     solution = Simplex(A, b, c, opt)
     print(solution.matrix)
-    print(solution.accept_solution())
+    # print(solution.accept_solution())
     print(solution.optimal_solution())
 
 
@@ -197,9 +216,30 @@ def main():
          ]
     b1 = [2, -2, 5]
 
-    simplex_method(A1, b1, c1, 'min')
+    c4 = [2, 4]
+    A4 = [[1, 2],
+          [1, 1]
+          ]
+    b4 = [5, 4]
+
+    c5 = [1, 2] # неограниченное решение
+    A5 = [[1, -1],
+          [1, 0]
+          ]
+    b5 = [10, 20]
+
+    c6 = [3, 2]  # нет допустимых решений
+    A6 = [[2, 1],
+          [-3, -4]
+          ]
+    b6 = [2, -12]
+
+    # simplex_method(A1, b1, c1, 'min')
     simplex_method(A2, b2, c2, 'max')
     simplex_method(A3, b3, c3, 'max')
+    simplex_method(A4, b4, c4, 'max')
+    # simplex_method(A5, b5, c5, 'max')
+    simplex_method(A6, b6, c6, 'max')
 
     # matrix, F = simplex_init(c, A, b, opt[1])
     # print_matrix(matrix, F, b)
