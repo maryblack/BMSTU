@@ -44,21 +44,21 @@ class Simplex:
         m = len(self.matrix)
         n = len(self.matrix[0])
 
-        for j in range(m):
-            if j != r:
-                new_val = float(old_matrix[j][k]*s_rk)
-                self.matrix[j][k] = -new_val
+        for i in range(m):
+            if i != r:
+                new_val = float(old_matrix[i][k]*s_rk)
+                self.matrix[i][k] = -new_val
 
-        for i in range(n):
-            if i != k:
-                new_val = float(old_matrix[r][i]*s_rk)
-                self.matrix[r][i] = new_val
+        for j in range(n):
+            if j != k:
+                new_val = float(old_matrix[r][j]*s_rk)
+                self.matrix[r][j] = new_val
 
-        for j in range(m):
-            for i in range(n):
-                if j != r and i != k:
-                    new_val = float(old_matrix[j][i] - old_matrix[r][i] * old_matrix[j][k]*s_rk)
-                    self.matrix[j][i] = new_val
+        for i in range(m):
+            for j in range(n):
+                if i != r and j != k:
+                    new_val = float(old_matrix[i][j] - old_matrix[r][j] * old_matrix[i][k]*s_rk)
+                    self.matrix[i][j] = new_val
 
 
 
@@ -176,12 +176,19 @@ def simplex_method(A, b, c, opt):
 
 def main():
 
-    c2 = [7, 5, 3]
+    c2 = [7, 5, 3]# 10 вариант
     A2 = [[4, 1, 1],
         [1, 2, 0],
         [0, 0.5, 1]
         ]
     b2 = [4, 3, 2]
+
+    c3 = [5, 3, 8]  # 16 вариант
+    A3 = [[2, 1, 1],
+          [1, 1, 0],
+          [0, 0.5, 2]
+          ]
+    b3 = [3, 6, 3]
 
     c1 = [1, -1] # пример из лекции
     A1 = [[1, -2],
@@ -192,6 +199,7 @@ def main():
 
     simplex_method(A1, b1, c1, 'min')
     simplex_method(A2, b2, c2, 'max')
+    simplex_method(A3, b3, c3, 'max')
 
     # matrix, F = simplex_init(c, A, b, opt[1])
     # print_matrix(matrix, F, b)
