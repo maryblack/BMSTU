@@ -88,7 +88,10 @@ class Simplex:
             free_str = [f'x{el+1}' for el in self.free]
             basis_str = [f'x{el+1}' for el in self.basis]
             b_0 = column(self.matrix,0)[:-1]
-            F = column(self.matrix,0)[-1]
+            if self.opt == 'min':
+                F = column(self.matrix, 0)[-1]
+            else:
+                F = - column(self.matrix, 0)[-1]
 
             answer = f"Опорное решение: {', '.join(free_str)}=0\n" \
                 f"{', '.join([basis_str[i]+'='+str(b_0[i]) for i in range(len(basis_str))])}\nF={F}"
@@ -254,6 +257,12 @@ def main():
           ]
     b7 = [-1, 1, 1]
 
+    c8 = [-1, 2]  # неограниченное решение
+    A8 = [[-1, -1],
+          [1, -2]
+          ]
+    b8 = [-1, 4]
+
     simplex_method(A1, b1, c1, 'min')
     simplex_method(A2, b2, c2, 'max')
     simplex_method(A6, b6, c6, 'max')
@@ -261,6 +270,7 @@ def main():
     simplex_method(A4, b4, c4, 'max')
     simplex_method(A5, b5, c5, 'max')
     simplex_method(A7, b7, c7, 'max')
+    simplex_method(A8, b8, c8, 'min')
 
 
     # matrix, F = simplex_init(c, A, b, opt[1])
