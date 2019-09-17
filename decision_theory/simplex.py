@@ -101,27 +101,29 @@ class Simplex:
 
     def optimal_solution(self):
         str = self.accept_solution()
+        new_line = '=' * 30
         if str == -1:
-            new_line = '=' * 30
             return f'Допустимых решений нет!\n{new_line}'
         print(str)
         no_col = self.no_col()
         iter = 0
         ind_sol = 0
         ind_break = 0
-        while no_col < (len(self.c) + 1) and ind_break != -1:
+        r = self.a_solving_row(no_col)
+        while no_col < (len(self.c) + 1) and ind_break != -1 and r != -1:
             r = self.a_solving_row(no_col)
             if r < len(self.b)+1:
                 # k = self.a_solving_row(no_col)
                 ind_break = self.change_basis(r, no_col, ind_sol)
                 no_col = self.no_col()
+                # r = self.a_solving_row(no_col)
                 ind_sol += 1
             else:
                 no_col = len(self.c) + 1
                 ind_sol = -1
 
-        if ind_break == -1:
-            return 'Неограниченное решение'
+        if ind_break == -1 or r == -1:
+            return f'Неограниченное решение\n{new_line}'
         else:
             free_str = [f'x{el+1}' for el in self.free]
             basis_str = [f'x{el+1}' for el in self.basis]
@@ -130,7 +132,6 @@ class Simplex:
                 F = column(self.matrix, 0)[-1]
             else:
                 F = - column(self.matrix, 0)[-1]
-            new_line = '=' * 30
             solution = []
             for i in range(len(basis_str)):
                 sol = f'{basis_str[i]}={b_0[i]}'
@@ -160,15 +161,20 @@ class Simplex:
         ind = 0
         min = max(b_0) # ищем положительный минимум
         sol_col = column(self.matrix, r)[:-1]
+        check = 0
         # что делать с делением на 0?
         for i in range(len(b_0)):
             if sol_col[i] != 0:
                 s = b_0[i]/sol_col[i]
             else:
                 s = sol_col[i]
+            if s > 0:
+                check += 1
             if s > 0 and s <= min:
                 min = s
                 ind = i
+        if check == 0:
+            return -1
         return ind
 
 
@@ -241,12 +247,20 @@ def main():
           ]
     b6 = [2, -12]
 
+    c7 = [1, 1]  # неограниченное решение
+    A7 = [[-2, -2],
+          [-1, 1],
+          [1, -1],
+          ]
+    b7 = [-1, 1, 1]
+
     simplex_method(A1, b1, c1, 'min')
     simplex_method(A2, b2, c2, 'max')
     simplex_method(A6, b6, c6, 'max')
     simplex_method(A3, b3, c3, 'max')
     simplex_method(A4, b4, c4, 'max')
     simplex_method(A5, b5, c5, 'max')
+    simplex_method(A7, b7, c7, 'max')
 
 
     # matrix, F = simplex_init(c, A, b, opt[1])
