@@ -33,12 +33,14 @@ class Simplex:
         m = df.to_numpy(dtype=np.float64)
         return m
 
-    def change_basis(self, r, k):
+    def change_basis(self, r, k, ind):
         old_matrix = deepcopy(self.matrix)
         new_k = self.free[k-1]
         new_r = self.basis[r]
         self.basis[r] = new_k
         self.free[k-1] = new_r
+        if old_matrix[r][k] == 0:
+            return -1
         s_rk = float(1 / old_matrix[r][k])
         self.matrix[r][k] = s_rk
         m = len(self.matrix)
@@ -60,18 +62,21 @@ class Simplex:
                     new_val = float(old_matrix[i][j] - old_matrix[r][j] * old_matrix[i][k]*s_rk)
                     self.matrix[i][j] = new_val
 
+        return ind
+
 
 
 
     def accept_solution(self):
         na = self.na_row()
         ind_sol = 0
+        ind_break = 0
         while na < (len(self.b)+1):
             # print(r)
             k = self.a_solving_col(na)
             if k < len(self.c)+1:
                 r = self.a_solving_row(k)
-                self.change_basis(r, k)
+                ind_break = self.change_basis(r, k, ind_sol)
                 na = self.na_row()
                 # r = self.a_solving_col(na)
                 ind_sol += 1
@@ -90,46 +95,48 @@ class Simplex:
 
             return answer
         else:
-            return 'Допустимых решений нет!'
+            return -1
 
 
 
     def optimal_solution(self):
         str = self.accept_solution()
+        if str == -1:
+            new_line = '=' * 30
+            return f'Допустимых решений нет!\n{new_line}'
         print(str)
-        if str == 'Допустимых решений нет!':
-            return 'И значит оптимального нет!'
         no_col = self.no_col()
         iter = 0
-        while no_col < (len(self.c) + 1):
+        ind_sol = 0
+        ind_break = 0
+        while no_col < (len(self.c) + 1) and ind_break != -1:
             r = self.a_solving_row(no_col)
             if r < len(self.b)+1:
                 # k = self.a_solving_row(no_col)
-                self.change_basis(r, no_col)
+                ind_break = self.change_basis(r, no_col, ind_sol)
                 no_col = self.no_col()
+                ind_sol += 1
             else:
                 no_col = len(self.c) + 1
-            iter += 1
+                ind_sol = -1
 
-        if iter == 0:
-            print('')
-
-
-
-        free_str = [f'x{el+1}' for el in self.free]
-        basis_str = [f'x{el+1}' for el in self.basis]
-        b_0 = column(self.matrix, 0)[:-1]
-        if self.opt == 'min':
-            F = column(self.matrix, 0)[-1]
+        if ind_break == -1:
+            return 'Неограниченное решение'
         else:
-            F = - column(self.matrix, 0)[-1]
-        new_line = '=' * 30
-        solution = []
-        for i in range(len(basis_str)):
-            sol = f'{basis_str[i]}={b_0[i]}'
-            solution.append(sol)
-        answer = f"Оптимальное решение: {', '.join(free_str)}=0\n" \
-            f"{', '.join(solution)}\nF={F}\n{new_line}"
+            free_str = [f'x{el+1}' for el in self.free]
+            basis_str = [f'x{el+1}' for el in self.basis]
+            b_0 = column(self.matrix, 0)[:-1]
+            if self.opt == 'min':
+                F = column(self.matrix, 0)[-1]
+            else:
+                F = - column(self.matrix, 0)[-1]
+            new_line = '=' * 30
+            solution = []
+            for i in range(len(basis_str)):
+                sol = f'{basis_str[i]}={b_0[i]}'
+                solution.append(sol)
+            answer = f"Оптимальное решение: {', '.join(free_str)}=0\n" \
+                f"{', '.join(solution)}\nF={F}\n{new_line}"
 
         return answer
 
@@ -159,7 +166,7 @@ class Simplex:
                 s = b_0[i]/sol_col[i]
             else:
                 s = sol_col[i]
-            if s > 0 and s < min:
+            if s > 0 and s <= min:
                 min = s
                 ind = i
         return ind
@@ -234,12 +241,13 @@ def main():
           ]
     b6 = [2, -12]
 
-    # simplex_method(A1, b1, c1, 'min')
+    simplex_method(A1, b1, c1, 'min')
     simplex_method(A2, b2, c2, 'max')
+    simplex_method(A6, b6, c6, 'max')
     simplex_method(A3, b3, c3, 'max')
     simplex_method(A4, b4, c4, 'max')
-    # simplex_method(A5, b5, c5, 'max')
-    simplex_method(A6, b6, c6, 'max')
+    simplex_method(A5, b5, c5, 'max')
+
 
     # matrix, F = simplex_init(c, A, b, opt[1])
     # print_matrix(matrix, F, b)
