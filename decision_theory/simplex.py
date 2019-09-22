@@ -10,13 +10,16 @@ class Simplex:
         self.A = A
         self.b = b
         self.c = c
-        self.matrix = self.simplex_matrix(A, b, c)
+        self.matrix = self.simplex_matrix(A, b, c, opt)
         self.free = list(range(n))
         self.basis = list(range(n, n + m))
         self.opt = opt
 
-    def simplex_matrix(self, A, b, c):
-        c_0 = [el for el in c]
+    def simplex_matrix(self, A, b, c, opt):
+        if opt == 'min':
+            c_0 = [-el for el in c]
+        else:
+            c_0 = [el for el in c]
         A_0 = []
         for i in range(len(A)):
             A_0.append([el for el in A[i]])
@@ -225,7 +228,7 @@ def main():
           ]
     b3 = [3, 6, 3]
 
-    c1 = [1, -1] # пример из лекции
+    c1 = [-1, 1] # пример из лекции
     A1 = [[1, -2],
          [-2, 1],
          [1, 1]
@@ -257,7 +260,7 @@ def main():
           ]
     b7 = [-1, 1, 1]
 
-    c8 = [-1, 2]  # неограниченное решение
+    c8 = [1, -2]  # неограниченное решение
     A8 = [[-1, -1],
           [1, -2]
           ]
