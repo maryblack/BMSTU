@@ -63,6 +63,7 @@ def main():
         pass
     filename = 'pic.png'
     img = cv2.imread(filename)
+    print(img)
     im = Image(img)
     # задаем последовательность операций над изображением
     fin = im. \

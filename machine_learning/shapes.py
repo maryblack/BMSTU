@@ -1,33 +1,3 @@
-# import sys
-# import numpy as np
-# import cv2 as cv
-#
-# hsv_min = np.array((0, 54, 5), np.uint8)
-# hsv_max = np.array((187, 255, 253), np.uint8)
-#
-# if __name__ == '__main__':
-#     fn = 'squares.jpg'  # имя файла, который будем анализировать
-#     # fn = 'rectangle.jpg'  # имя файла, который будем анализировать
-#     img = cv.imread(fn)
-#
-#     hsv = cv.cvtColor(img, cv.COLOR_BGR2HSV)  # меняем цветовую модель с BGR на HSV
-#     thresh = cv.inRange(hsv, hsv_min, hsv_max)  # применяем цветовой фильтр
-#     cv.imshow('contours', thresh)
-#     cv.waitKey()
-#     contours0, hierarchy = cv.findContours(thresh.copy(), cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
-#
-#     # перебираем все найденные контуры в цикле
-#     for cnt in contours0:
-#         rect = cv.minAreaRect(cnt)  # пытаемся вписать прямоугольник
-#         box = cv.boxPoints(rect)  # поиск четырех вершин прямоугольника
-#         box = np.int0(box)  # округление координат
-#         cv.drawContours(img, [box], 0, (255, 0, 0), 2)  # рисуем прямоугольник
-#
-#     cv.imshow('contours', img)  # вывод обработанного кадра в окно
-#
-#     cv.waitKey()
-#     cv.destroyAllWindows()
-
 import cv2
 font = cv2.FONT_HERSHEY_COMPLEX
 
@@ -65,14 +35,14 @@ def isrect(cnt):
 
 for cnt in contours:
     approx = cv2.approxPolyDP(cnt, 0.01*cv2.arcLength(cnt, True), True)
-    print(len(approx))
+    # print(len(approx))
 
-    # if len(approx) >= 4 and sqr_rect(cnt) < 5000 and sqr_rect(cnt) > 250:
-    #     cv2.drawContours(init, [approx], 0, (0, 255, 0), 2)
-
-    if len(approx) == 14:
-        new = approx[:4]
-        cv2.drawContours(init, [new], 0, (0, 255, 0), 2)
+    if len(approx) >= 4 and sqr_rect(cnt) < 5000 and sqr_rect(cnt) > 250:
+        cv2.drawContours(init, [approx], 0, (0, 255, 0), 2)
+    # cv2.drawContours(init, [approx], 0, (0, 255, 0), 2)
+    # if len(approx) == 14:
+    #     new = approx[1:5]
+    #     cv2.drawContours(init, [new], 0, (0, 255, 0), 2)
 
     # if len(approx) == 4:# рисование прямоугольника по 2 углам
     #     angle1 = (approx[0][0][0], approx[0][0][1])
