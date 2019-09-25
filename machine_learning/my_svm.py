@@ -148,7 +148,7 @@ def main():
     data_len = 36
     X, y = create_data(data_len)
     print(X, y)
-    clf = svm.SVC(gamma='scale')
+    clf = svm.SVC(C=100, gamma='scale')
     clf.fit(X,y)
     a_x = clf.predict(X)
     print(a_x)
