@@ -91,12 +91,14 @@ def teng(img):
 def sob_variance(img):
     N, M = img.shape
     S = sobel(img)
-    S_mean = np.sum(S) / (N * M)
-    sob_var = np.sum(np.square(np.subtract(S, S_mean)))
+    threshold = np.max(S) * 0.8
+    res = np.where(S > threshold)
+    S_mean = np.sum(res) / (N * M)
+    sob_var = np.sum(np.square(np.subtract(res, S_mean)))
     return sob_var
 
 
-def draw_blur(filename, nx, ny, mode):
+def draw_blur(filename, nx, ny, mode=None):
     init = cv2.imread(filename)
     img = Image.open(filename)
     pict = Picture(img)
