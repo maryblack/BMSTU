@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 from PIL import Image
 import matplotlib.pyplot as plt
+import os
 
 
 class Picture:
@@ -9,17 +10,21 @@ class Picture:
         self.img = image
 
     def split_areas(self, num_x, num_y):
+        try:
+            os.mkdir('splitted')
+        except FileExistsError:
+            pass
         imgwidth, imgheight = self.img.size
         step_x = round(imgwidth/num_x)
         step_y = round(imgheight/num_y)
         i = 0
-        while i <= imgwidth:
+        while i < imgwidth:
             j = 0
-            while j <= imgheight:
+            while j < imgheight:
                 box = (i, j, i + step_x, j + step_y)
                 a = self.img.crop(box)
-                a.save(f'{i}{j}.png')
-                print(a)
+                a.save(f'splitted/{i}{j}.png')
+                # print(a)
                 j += step_y
             i += step_x
 
@@ -38,7 +43,7 @@ def main():
     # img = cv2.imread(filename)
     img = Image.open(filename)
     pict = Picture(img)
-    pict.split_areas(2,2)
+    pict.split_areas(3,4)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
