@@ -117,7 +117,7 @@ def draw_blur(filename, nx, ny, mode=None):
                 cv2.rectangle(init, el[0][0], el[0][1], (0, 0, 255), 2)
 
             # cv2.imshow("blur", init)
-        cv2.imwrite('blured_glvn.png', init)
+        cv2.imwrite('blured_glvn.jpg', init)
 
     elif mode == 'tenengrad':
         TENG_val = []
@@ -131,7 +131,7 @@ def draw_blur(filename, nx, ny, mode=None):
             if el[1] > threshold:
                 cv2.rectangle(init, el[0][0], el[0][1], (0, 0, 255), 2)
 
-        cv2.imwrite('blured_teng.png', init)
+        cv2.imwrite('blured_teng.jpg', init)
 
     elif mode == 'sobel_variance':
         SOB_val = []
@@ -145,7 +145,7 @@ def draw_blur(filename, nx, ny, mode=None):
             if el[1] > threshold:
                 cv2.rectangle(init, el[0][0], el[0][1], (0, 0, 255), 2)
 
-        cv2.imwrite('blured_sobel.png', init)
+        cv2.imwrite('blured_sobel.jpg', init)
 
 
 def main():
