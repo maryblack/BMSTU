@@ -75,8 +75,8 @@ def point_to_vect(x1, x2, y1, y2):
 
 
 def main():
-    init = cv2.imread("squares.jpg")
-    img = cv2.imread("squares.jpg", cv2.IMREAD_GRAYSCALE)
+    init = cv2.imread("rectangle_detection/squares.jpg")
+    img = cv2.imread("rectangle_detection/squares.jpg", cv2.IMREAD_GRAYSCALE)
 
     # img = cv2.imread("rectangle.jpg", cv2.IMREAD_GRAYSCALE)
     # сравним различные способы бинаризации изображения
@@ -109,7 +109,7 @@ def main():
         y = approx.ravel()[1]
 
     # cv2.imshow("shapes", init)
-    cv2.imwrite('result.png', init)
+    cv2.imwrite('result.jpg', init)
     # cv2.imshow("Threshold", threshold)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
