@@ -2,11 +2,11 @@
 Реализовать алгоритмы распознавания размытого изображения и региона
 ![Оригинальное изображение](blur.jpg)
 - Tenengrad (TENG)
-![Tenengrad](blur_teng.jpg)
+![Tenengrad](blured_teng.jpg)
 
 - Normalized Gray Level Variance (GLVN)
-![GLVN](blur_glvn.jpg)
+![GLVN](blured_glvn.jpg)
 
 - Sobel Variance (GLVN)
-![GLVN](blur_sobel.jpg)
+![GLVN](blured_sobel.jpg)
 
