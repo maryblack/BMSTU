@@ -149,6 +149,7 @@ def draw_blur(filename, nx, ny, mode=None):
 
 
 def main():
+    path = os.getcwd()
     filename = 'blur.jpg'
     # filename = 'test.jpg'
     mode = ['glvn', 'tenengrad', 'sobel_variance']
