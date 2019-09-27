@@ -150,6 +150,7 @@ def draw_blur(filename, nx, ny, mode=None):
 
 def main():
     filename = 'blur.jpg'
+    # filename = 'test.jpg'
     mode = ['glvn', 'tenengrad', 'sobel_variance']
     nx = 10
     ny = 10
