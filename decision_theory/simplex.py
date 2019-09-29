@@ -30,8 +30,9 @@ class Simplex:
             columns.append(f'{i + 1}')
         A_0.append(c_0)
         df = pd.DataFrame(A_0, index=None, columns=columns)
-        b.append(0)
-        df.insert(0, 'b', b)
+        b_0 = [el for el in b]
+        b_0.append(0)
+        df.insert(0, 'b', b_0)
         # print(df)
         m = df.to_numpy(dtype=np.float64)
         return m
@@ -124,6 +125,7 @@ class Simplex:
                 no_col = self.no_col()
                 # r = self.a_solving_row(no_col)
                 ind_sol += 1
+                # print(self.matrix)
             else:
                 no_col = len(self.c) + 1
                 ind_sol = -1
@@ -165,7 +167,7 @@ class Simplex:
     def a_solving_row(self, r):
         b_0 = column(self.matrix, 0)[:-1]
         ind = 0
-        min = max(b_0) # ищем положительный минимум
+        min = 9999999 # ищем положительный минимум
         sol_col = column(self.matrix, r)[:-1]
         check = 0
         # что делать с делением на 0?
@@ -185,11 +187,11 @@ class Simplex:
 
 
     def no_col(self):
-        F = self.matrix[-1]
+        F = self.matrix[-1][1:]
         for i in range(len(F)):
             # if F[i] < 0:
             if F[i] > 0:
-                return i
+                return i + 1
         return len(F)+1 # значит нет отрицательных значений в строке
 
 
@@ -205,10 +207,28 @@ def column(matrix, j):
     return col
 
 def simplex_method(A, b, c, opt):
+    print("Решение прямой задачи:")
     solution = Simplex(A, b, c, opt)
     print(solution.matrix)
     # print(solution.accept_solution())
     print(solution.optimal_solution())
+
+def duality_simplex_method(A, b, c, opt):
+    # print(type(A), type(b), type(c))
+    if opt == 'min':
+        opt_dual = 'max'
+    else:
+        opt_dual = 'min'
+    c_dual = b
+    A_matrix = np.array(A)
+    A_dual = np.negative(A_matrix.T)
+    b_dual = np.negative(c)
+
+    solution = Simplex(A_dual, b_dual, c_dual, opt_dual)
+    print("Решение двойственной задачи:")
+    print(solution.matrix)
+    print(solution.optimal_solution())
+
 
 
 
@@ -266,14 +286,35 @@ def main():
           ]
     b8 = [-1, 4]
 
-    simplex_method(A1, b1, c1, 'min')
+    c9 = [-4, -18, -30, -5]
+    A9 = [
+        [3, 1, -4, -1],
+        [-2, -4, -1, 1]
+    ]
+    b9 = [-3, -3]
+
+    c10 = b9
+    A10 = [
+        [-3, 2],
+        [-1, 4],
+        [4, 1],
+        [1, -1]
+    ]
+    b10 = [4, 18, 30, 5]
+
+    # simplex_method(A1, b1, c1, 'min')
     simplex_method(A2, b2, c2, 'max')
-    simplex_method(A6, b6, c6, 'max')
-    simplex_method(A3, b3, c3, 'max')
-    simplex_method(A4, b4, c4, 'max')
-    simplex_method(A5, b5, c5, 'max')
-    simplex_method(A7, b7, c7, 'max')
-    simplex_method(A8, b8, c8, 'min')
+    duality_simplex_method(A2, b2, c2, 'max')
+    # simplex_method(A6, b6, c6, 'max')
+    # simplex_method(A3, b3, c3, 'max')
+    # simplex_method(A4, b4, c4, 'max')
+    # simplex_method(A5, b5, c5, 'max')
+    # simplex_method(A7, b7, c7, 'max')
+    # simplex_method(A8, b8, c8, 'min')
+    # simplex_method(A9, b9, c9, 'max')
+    simplex_method(A9, b9, c9, 'max')
+    duality_simplex_method(A9, b9, c9, 'max')
+
 
 
     # matrix, F = simplex_init(c, A, b, opt[1])
