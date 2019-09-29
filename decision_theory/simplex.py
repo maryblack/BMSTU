@@ -4,7 +4,7 @@ from copy import deepcopy
 
 
 class Simplex:
-    def __init__(self, A, b, c, opt):
+    def __init__(self, A, b, c, opt, dual = None):
         n = len(c)
         m = len(A)
         self.A = A
@@ -14,6 +14,7 @@ class Simplex:
         self.free = list(range(n))
         self.basis = list(range(n, n + m))
         self.opt = opt
+        self.d = dual
 
     def simplex_matrix(self, A, b, c, opt):
         if opt == 'min':
@@ -89,8 +90,13 @@ class Simplex:
                 na = len(self.b) + 1
 
         if ind_sol >= 0:
-            free_str = [f'x{el+1}' for el in self.free]
-            basis_str = [f'x{el+1}' for el in self.basis]
+            # print(f'iterations step 1: {ind_sol}')
+            if self.d:
+                var = 'y'
+            else:
+                var = 'x'
+            free_str = [f'{var}{el+1}' for el in self.free]
+            basis_str = [f'{var}{el+1}' for el in self.basis]
             b_0 = column(self.matrix,0)[:-1]
             if self.opt == 'min':
                 F = column(self.matrix, 0)[-1]
@@ -116,7 +122,11 @@ class Simplex:
         iter = 0
         ind_sol = 0
         ind_break = 0
-        r = self.a_solving_row(no_col)
+        no_init = no_col
+        if no_col == len(self.c) + 1:
+            r = -1
+        else:
+            r = self.a_solving_row(no_col)
         while no_col < (len(self.c) + 1) and ind_break != -1 and r != -1:
             r = self.a_solving_row(no_col)
             if r < len(self.b)+1:
@@ -130,11 +140,16 @@ class Simplex:
                 no_col = len(self.c) + 1
                 ind_sol = -1
 
-        if ind_break == -1 or r == -1:
+        if (ind_break == -1 or r == -1) and (no_init != len(self.c) + 1):
             return f'Неограниченное решение\n{new_line}'
         else:
-            free_str = [f'x{el+1}' for el in self.free]
-            basis_str = [f'x{el+1}' for el in self.basis]
+            # print(f'iterations step 2: {ind_sol}')
+            if self.d:
+                var = 'y'
+            else:
+                var = 'x'
+            free_str = [f'{var}{el+1}' for el in self.free]
+            basis_str = [f'{var}{el+1}' for el in self.basis]
             b_0 = column(self.matrix, 0)[:-1]
             if self.opt == 'min':
                 F = column(self.matrix, 0)[-1]
@@ -214,25 +229,42 @@ def simplex_method(A, b, c, opt):
     print(solution.optimal_solution())
 
 def duality_simplex_method(A, b, c, opt):
-    # print(type(A), type(b), type(c))
+    # print(A, b, c)
+    A_matrix = np.array(A)
     if opt == 'min':
         opt_dual = 'max'
+        c_dual = np.negative(b)
+        A_dual = np.negative(A_matrix.T)
+        b_dual = c
+
     else:
         opt_dual = 'min'
-    c_dual = b
-    A_matrix = np.array(A)
-    A_dual = np.negative(A_matrix.T)
-    b_dual = np.negative(c)
+        c_dual = b
+        A_dual = np.negative(A_matrix.T)
+        b_dual = np.negative(c)
 
-    solution = Simplex(A_dual, b_dual, c_dual, opt_dual)
+    solution = Simplex(A_dual, b_dual, c_dual, opt_dual, dual = True)
     print("Решение двойственной задачи:")
     print(solution.matrix)
     print(solution.optimal_solution())
+    return A_dual, b_dual, c_dual, opt_dual
 
+def primal_n_dual(A, b, c, opt):
+
+    simplex_method(A, b, c, opt)
+    A_dual, b_dual, c_dual, opt_dual = duality_simplex_method(A, b, c, opt)
+    # print('Двойственная к двойственной')
+    # duality_simplex_method(A_dual, b_dual, c_dual, opt_dual)
 
 
 
 def main():
+    c1 = [-1, 1]
+    A1 = [[1, -2],
+        [-2, 1],
+        [1, 1]]
+
+    b1 = [2,-2, 5]
 
     c2 = [7, 5, 3]# 10 вариант
     A2 = [[4, 1, 1],
@@ -247,13 +279,6 @@ def main():
           [0, 0.5, 2]
           ]
     b3 = [3, 6, 3]
-
-    c1 = [-1, 1] # пример из лекции
-    A1 = [[1, -2],
-         [-2, 1],
-         [1, 1]
-         ]
-    b1 = [2, -2, 5]
 
     c4 = [2, 4]
     A4 = [[1, 2],
@@ -293,28 +318,24 @@ def main():
     ]
     b9 = [-3, -3]
 
-    c10 = b9
-    A10 = [
-        [-3, 2],
-        [-1, 4],
-        [4, 1],
-        [1, -1]
+    c = [2, 3, 0, 0, 0]
+    A = [
+        [4, 8, 1, 0, 0],
+        [2, 1, 0, 1, 0],
+        [3, 2, 0, 0, 1]
     ]
-    b10 = [4, 18, 30, 5]
+    b = [12, 3, 4]
 
-    # simplex_method(A1, b1, c1, 'min')
-    simplex_method(A2, b2, c2, 'max')
-    duality_simplex_method(A2, b2, c2, 'max')
-    # simplex_method(A6, b6, c6, 'max')
-    # simplex_method(A3, b3, c3, 'max')
-    # simplex_method(A4, b4, c4, 'max')
-    # simplex_method(A5, b5, c5, 'max')
-    # simplex_method(A7, b7, c7, 'max')
-    # simplex_method(A8, b8, c8, 'min')
-    # simplex_method(A9, b9, c9, 'max')
-    simplex_method(A9, b9, c9, 'max')
-    duality_simplex_method(A9, b9, c9, 'max')
-
+    primal_n_dual(A1, b1, c1, 'min')
+    primal_n_dual(A, b, c, 'max')
+    primal_n_dual(A2, b2, c2, 'max')
+    primal_n_dual(A6, b6, c6, 'max')
+    primal_n_dual(A3, b3, c3, 'max')
+    primal_n_dual(A4, b4, c4, 'max')
+    primal_n_dual(A5, b5, c5, 'max')
+    primal_n_dual(A7, b7, c7, 'max')
+    primal_n_dual(A8, b8, c8, 'min')
+    primal_n_dual(A9, b9, c9, 'max')
 
 
     # matrix, F = simplex_init(c, A, b, opt[1])
