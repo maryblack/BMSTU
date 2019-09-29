@@ -342,7 +342,7 @@ def integer(A, b, c, opt):
     free_str = [f'{var}{el + 1}' for el in solution.free]
     basis_str = [f'{var}{el + 1}' for el in solution.basis]
     answer = []
-    for i in range(len(basis_str)):
+    for i in range(len(free_str)):
         s = f'{free_str[i]}={sol[i]}'
         answer.append(s)
     print(f"Ответ: {', '.join(basis_str)}=0\n" \
