@@ -6,7 +6,6 @@ from copy import deepcopy
 from itertools import permutations
 
 
-
 class NoAcceptedSolution(Exception):
     def __init__(self):
         super().__init__("Нет опорного решения!")
@@ -15,8 +14,6 @@ class NoAcceptedSolution(Exception):
 class NoOptimalSolution(Exception):
     def __init__(self):
         super().__init__("Решение не ограничено!")
-
-
 
 
 class Solutions:
@@ -42,8 +39,6 @@ class Solutions:
                     new.extend(toadd)
                 var.append(new)
         return var
-
-
 
 
 class Simplex:
@@ -149,7 +144,7 @@ class Simplex:
         else:
             raise NoAcceptedSolution()
 
-    def optimal_solution(self):
+    def optimal_solution(self) -> (list, float):
         accepted_solution = self.accept_solution()
         new_line = '=' * 30
         print("Опорное решение:")
@@ -186,7 +181,7 @@ class Simplex:
             raise NoOptimalSolution()
         else:
             print(self.print_answer())
-            return b_0
+            return b_0, self.get_f()
 
     def na_row(self):
         b_0 = column(self.matrix, 0)[:-1]
@@ -236,7 +231,7 @@ class Simplex:
         conditions = []
         r = len(self.c)
         for el in range(r):
-            x_range = list(np.linspace(0, max_vect, int(max_vect)+1))
+            x_range = list(np.linspace(0, max_vect, int(max_vect) + 1))
             conditions.append(x_range)
 
         for i in range(r):
@@ -254,7 +249,7 @@ class Simplex:
         #     print(f'b vect: {self.b}\nres vect:{np.dot(A, np.array(el).T)}')
 
         c = np.array(self.c)
-        result = [np.dot(c, np.array(el))for el in filtered]
+        result = [np.dot(c, np.array(el)) for el in filtered]
         ans = np.argmax(result)
         # print(filtered[ans])
 
@@ -282,10 +277,7 @@ class Simplex:
         free_str = [f'{var}{el + 1}' for el in self.free]
         basis_str = [f'{var}{el + 1}' for el in self.basis]
         b_0 = column(self.matrix, 0)[:-1]
-        if self.opt == 'min':
-            F = column(self.matrix, 0)[-1]
-        else:
-            F = - column(self.matrix, 0)[-1]
+        F = self.get_f()
         solution = []
         for i in range(len(basis_str)):
             sol = f'{basis_str[i]}={b_0[i]}'
@@ -293,6 +285,12 @@ class Simplex:
         answer = f"{', '.join(free_str)}=0\n" \
             f"{', '.join(solution)}\nF={F}"
         return answer
+
+    def get_f(self) -> float:
+        if self.opt == 'min':
+            return column(self.matrix, 0)[-1]
+        else:
+            return - column(self.matrix, 0)[-1]
 
 
 def column(matrix, j):
@@ -305,7 +303,7 @@ def column(matrix, j):
     return col
 
 
-def simplex_method(A, b, c, opt, dual = None):
+def simplex_method(A, b, c, opt, dual=None):
     if dual:
         print("Решение двойственной задачи:")
         A_dual, b_dual, c_dual, opt_dual = duality_simplex_method(A, b, c, opt)
@@ -325,15 +323,17 @@ def bb_method(A, b, c, opt):
         pass
     print(new_line)
 
+
 def integer_answer(b):
     for i in range(len(b)):
         if b[i] % 1 != 0:
             return False, i, b[i]
     return True, 0, b[-1]
 
+
 def bb(A, b, c, opt):
     solution = Simplex(A, b, c, opt)
-    answer = solution.optimal_solution()
+    answer, _ = solution.optimal_solution()
     if answer == -1:
         print(f'Неограниченное решение!')
         return -1
@@ -367,8 +367,6 @@ def bb(A, b, c, opt):
         # bb(A_2, b_2, c, opt)
 
 
-
-
 def duality_simplex_method(A, b, c, opt):
     A_matrix = np.array(A)
     if opt == 'min':
@@ -384,7 +382,6 @@ def duality_simplex_method(A, b, c, opt):
         b_dual = np.negative(c)
 
     return A_dual, b_dual, c_dual, opt_dual
-
 
 
 def integer(A, b, c, opt):
@@ -404,31 +401,35 @@ def integer(A, b, c, opt):
         s = f'{free_str[i]}={sol[i]}'
         answer.append(s)
     print(f"Ответ: {', '.join(basis_str)}=0\n" \
-        f"{', '.join(answer)}\nF={F}\n{new_line}")
-
+              f"{', '.join(answer)}\nF={F}\n{new_line}")
 
 
 def main():
-    c1 = [-1, 1]
-    A1 = [[1, -2],
-          [-2, 1],
-          [1, 1]]
+    c = [-1, 1]
+    A = [[1, -2],
+         [-2, 1],
+         [1, 1]]
+    b = [2, -2, 5]
+    _, f = Simplex(A, b, c, 'min').optimal_solution()
+    assert -3.0 == f
 
-    b1 = [2, -2, 5]
+    c = [7, 5, 3]  # 10 вариант
+    A = [[4, 1, 1],
+         [1, 2, 0],
+         [0, 0.5, 1]
+         ]
+    b = [4, 3, 2]
+    _, f = Simplex(A, b, c, 'max').optimal_solution()
+    assert 13.0 == f
 
-    c2 = [7, 5, 3]  # 10 вариант
-    A2 = [[4, 1, 1],
-          [1, 2, 0],
-          [0, 0.5, 1]
-          ]
-    b2 = [4, 3, 2]
-
-    c3 = [5, 3, 8]  # 16 вариант
-    A3 = [[2, 1, 1],
-          [1, 1, 0],
-          [0, 0.5, 2]
-          ]
-    b3 = [3, 6, 3]
+    c = [5, 3, 8]  # 16 вариант
+    A = [[2, 1, 1],
+         [1, 1, 0],
+         [0, 0.5, 2]
+         ]
+    b = [3, 6, 3]
+    _, f = Simplex(A, b, c, 'max').optimal_solution()
+    assert 15.75 == f
 
     c4 = [2, 4]
     A4 = [[1, 2],
