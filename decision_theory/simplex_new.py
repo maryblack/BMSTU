@@ -7,9 +7,15 @@ from itertools import permutations
 
 
 
-class NoAccptedSolution(Exception):
+class NoAcceptedSolution(Exception):
     def __init__(self):
         super().__init__("Нет опорного решения!")
+
+
+class NoOptimalSolution(Exception):
+    def __init__(self):
+        super().__init__("Решение не ограничено!")
+
 
 
 
@@ -141,7 +147,7 @@ class Simplex:
 
             return b_0
         else:
-            raise NoAccptedSolution()
+            raise NoAcceptedSolution()
 
     def optimal_solution(self):
         accepted_solution = self.accept_solution()
@@ -177,7 +183,7 @@ class Simplex:
                 check += 1
 
         if (check != 0) or ((ind_break == -1 or r == -1) and (no_init != len(self.c) + 1)):
-            return -1
+            raise NoOptimalSolution()
         else:
             print(self.print_answer())
             return b_0
@@ -300,23 +306,16 @@ def column(matrix, j):
 
 
 def simplex_method(A, b, c, opt, dual = None):
-    new_line = '=' * 30
     if dual:
         print("Решение двойственной задачи:")
-        solution = Simplex(A, b, c, opt, dual)
+        A_dual, b_dual, c_dual, opt_dual = duality_simplex_method(A, b, c, opt)
+        solution = Simplex(A_dual, b_dual, c_dual, opt_dual, dual)
     else:
         print("Решение прямой задачи:")
         solution = Simplex(A, b, c, opt)
     print(solution.matrix)
-    # print("Опорное решение:")
-    # print(solution.print_answer())
-    res = solution.optimal_solution()
-    if res == -1:
-        # print("Оптимальное решение:")
-        print(f'Неограниченное решение!')
-    elif res == -2:
-        print(f'Допустимых решений нет!')
-    print(new_line)
+    solution.optimal_solution()
+
 
 def bb_method(A, b, c, opt):
     new_line = '=' * 30
@@ -387,13 +386,6 @@ def duality_simplex_method(A, b, c, opt):
     return A_dual, b_dual, c_dual, opt_dual
 
 
-def primal_n_dual(A, b, c, opt):
-    simplex_method(A, b, c, opt)
-    A_dual, b_dual, c_dual, opt_dual = duality_simplex_method(A, b, c, opt)
-    simplex_method(A_dual, b_dual, c_dual, opt_dual, True)
-
-    # print('Двойственная к двойственной')
-    # duality_simplex_method(A_dual, b_dual, c_dual, opt_dual)
 
 def integer(A, b, c, opt):
     solution = Simplex(A, b, c, opt)
@@ -499,7 +491,7 @@ def main():
     ]
     b12 = [12, 20, 2]
 
-    primal_n_dual(A1, b1, c1, 'min')
+    # primal_n_dual(A1, b1, c1, 'min')
     # bb_method(A1, b1, c1, 'min')
     # primal_n_dual(A, b, c, 'max')
     # integer(A, b, c, 'max')
@@ -514,7 +506,21 @@ def main():
     # bb_method(A12, b12, c12, 'max')
     # bb_method(A11, b11, c11, 'max')
     # integer(A11, b11, c11, 'max')
-    # primal_n_dual(A6, b6, c6, 'max')
+    try:
+        simplex_method(A6, b6, c6, 'max')
+    except NoAcceptedSolution as e:
+        print(e)
+        assert True
+    else:
+        assert False
+
+    try:
+        simplex_method(A6, b6, c6, 'max', dual=True)
+    except NoOptimalSolution as e:
+        print(e)
+        assert True
+    else:
+        assert False
     # primal_n_dual(A3, b3, c3, 'max')
     # primal_n_dual(A4, b4, c4, 'max')
     # primal_n_dual(A5, b5, c5, 'max')
