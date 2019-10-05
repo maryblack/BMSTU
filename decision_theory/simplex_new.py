@@ -42,7 +42,7 @@ class Solutions:
 
 
 class Simplex:
-    def __init__(self, A, b, c, opt, dual=None):
+    def __init__(self, A, b, c, opt, dual: bool = None):
         n = len(c)
         m = len(A)
         self.A = A
@@ -293,6 +293,29 @@ class Simplex:
             return - column(self.matrix, 0)[-1]
 
 
+class DualSimplex(Simplex):
+    def __init__(self, A, b, c, opt):
+        A_dual, b_dual, c_dual, opt_dual = DualSimplex.duality_simplex_method(A, b, c, opt)
+        super().__init__(A_dual, b_dual, c_dual, opt_dual, dual=True)
+
+    @staticmethod
+    def duality_simplex_method(A, b, c, opt) -> (np.ndarray, np.ndarray, np.ndarray, str):
+        A_matrix = np.array(A)
+        if opt == 'min':
+            opt_dual = 'max'
+            c_dual = np.negative(b)
+            A_dual = np.negative(A_matrix.T)
+            b_dual = c
+
+        else:
+            opt_dual = 'min'
+            c_dual = b
+            A_dual = np.negative(A_matrix.T)
+            b_dual = np.negative(c)
+
+        return A_dual, b_dual, c_dual, opt_dual
+
+
 def column(matrix, j):
     N = len(matrix)
     col = []
@@ -301,18 +324,6 @@ def column(matrix, j):
         col.append(matrix[i][j])
 
     return col
-
-
-def simplex_method(A, b, c, opt, dual=None):
-    if dual:
-        print("Решение двойственной задачи:")
-        A_dual, b_dual, c_dual, opt_dual = duality_simplex_method(A, b, c, opt)
-        solution = Simplex(A_dual, b_dual, c_dual, opt_dual, dual)
-    else:
-        print("Решение прямой задачи:")
-        solution = Simplex(A, b, c, opt)
-    print(solution.matrix)
-    solution.optimal_solution()
 
 
 def bb_method(A, b, c, opt):
@@ -367,23 +378,6 @@ def bb(A, b, c, opt):
         # bb(A_2, b_2, c, opt)
 
 
-def duality_simplex_method(A, b, c, opt):
-    A_matrix = np.array(A)
-    if opt == 'min':
-        opt_dual = 'max'
-        c_dual = np.negative(b)
-        A_dual = np.negative(A_matrix.T)
-        b_dual = c
-
-    else:
-        opt_dual = 'min'
-        c_dual = b
-        A_dual = np.negative(A_matrix.T)
-        b_dual = np.negative(c)
-
-    return A_dual, b_dual, c_dual, opt_dual
-
-
 def integer(A, b, c, opt):
     solution = Simplex(A, b, c, opt)
     print('Целочисленное решение прямой задачи:')
@@ -410,8 +404,10 @@ def main():
          [-2, 1],
          [1, 1]]
     b = [2, -2, 5]
-    _, f = Simplex(A, b, c, 'min').optimal_solution()
-    assert -3.0 == f
+    _, f_primal = Simplex(A, b, c, 'min').optimal_solution()
+    _, f_dual = DualSimplex(A, b, c, 'min').optimal_solution()
+    assert -3.0 == f_primal == f_dual
+    print('=' * 30)
 
     c = [7, 5, 3]  # 10 вариант
     A = [[4, 1, 1],
@@ -419,8 +415,9 @@ def main():
          [0, 0.5, 1]
          ]
     b = [4, 3, 2]
-    _, f = Simplex(A, b, c, 'max').optimal_solution()
-    assert 13.0 == f
+    _, f_primal = Simplex(A, b, c, 'max').optimal_solution()
+    _, f_dual = DualSimplex(A, b, c, 'max').optimal_solution()
+    assert 13.0 == f_primal == f_dual
 
     c = [5, 3, 8]  # 16 вариант
     A = [[2, 1, 1],
@@ -428,46 +425,119 @@ def main():
          [0, 0.5, 2]
          ]
     b = [3, 6, 3]
-    _, f = Simplex(A, b, c, 'max').optimal_solution()
-    assert 15.75 == f
+    _, f_primal = Simplex(A, b, c, 'max').optimal_solution()
+    _, f_dual = DualSimplex(A, b, c, 'max').optimal_solution()
+    assert 15.75 == f_primal == f_dual
 
-    c4 = [2, 4]
-    A4 = [[1, 2],
-          [1, 1]
-          ]
-    b4 = [5, 4]
+    c = [2, 4]
+    A = [[1, 2],
+         [1, 1]
+         ]
+    b = [5, 4]
+    _, f_primal = Simplex(A, b, c, 'max').optimal_solution()
+    _, f_dual = Simplex(A, b, c, 'max').optimal_solution()
+    assert 10.0 == f_primal
 
-    c5 = [1, 2]  # неограниченное решение
-    A5 = [[1, -1],
-          [1, 0]
-          ]
-    b5 = [10, 20]
+    c = [1, 2]  # неограниченное решение
+    A = [[1, -1],
+         [1, 0]
+         ]
+    b = [10, 20]
+    try:
+        Simplex(A, b, c, 'max').optimal_solution()
+    except NoOptimalSolution as e:
+        print(e)
+        assert True
+    else:
+        assert False
+    try:
+        DualSimplex(A, b, c, 'max').optimal_solution()
+    except NoAcceptedSolution as e:
+        print(e)
+        assert True
+    else:
+        assert False
 
-    c6 = [3, 2]  # нет допустимых решений
-    A6 = [[2, 1],
-          [-3, -4]
-          ]
-    b6 = [2, -12]
+    c = [3, 2]  # нет допустимых решений
+    A = [[2, 1],
+         [-3, -4]
+         ]
+    b = [2, -12]
+    try:
+        Simplex(A, b, c, 'max').optimal_solution()
+    except NoAcceptedSolution as e:
+        print(e)
+        assert True
+    else:
+        assert False
+    try:
+        DualSimplex(A, b, c, 'max').optimal_solution()
+    except NoOptimalSolution as e:
+        print(e)
+        assert True
+    else:
+        assert False
 
-    c7 = [1, 1]  # неограниченное решение
-    A7 = [[-2, -2],
-          [-1, 1],
-          [1, -1],
-          ]
-    b7 = [-1, 1, 1]
+    c = [1, 1]  # неограниченное решение
+    A = [[-2, -2],
+         [-1, 1],
+         [1, -1],
+         ]
+    b = [-1, 1, 1]
+    try:
+        Simplex(A, b, c, 'max').optimal_solution()
+    except NoOptimalSolution as e:
+        print(e)
+        assert True
+    else:
+        assert False
 
-    c8 = [1, -2]  # неограниченное решение
-    A8 = [[-1, -1],
-          [1, -2]
-          ]
-    b8 = [-1, 4]
 
-    c9 = [-4, -18, -30, -5]
-    A9 = [
+    try:
+        DualSimplex(A, b, c, 'max').optimal_solution()
+    except NoAcceptedSolution as e:
+        print(e)
+        assert True
+    else:
+        assert False
+
+
+    c = [1, -2]  # неограниченное решение
+    A = [[-1, -1],
+         [1, -2]
+         ]
+    b = [-1, 4]
+    try:
+        Simplex(A, b, c, 'min').optimal_solution()
+    except NoOptimalSolution as e:
+        print(e)
+        assert True
+    else:
+        assert False
+
+
+    try:
+        DualSimplex(A, b, c, 'min').optimal_solution()
+    except NoAcceptedSolution as e:
+        print(e)
+        assert True
+    else:
+        assert False
+
+
+
+    c = [-4, -18, -30, -5]
+    A = [
         [3, 1, -4, -1],
         [-2, -4, -1, 1]
     ]
-    b9 = [-3, -3]
+    b = [-3, -3]
+    _, actual_f_primal = Simplex(A, b, c, 'max').optimal_solution()
+    _, actual_f_dual = DualSimplex(A, b, c, 'max').optimal_solution()
+    comparison_delta = 0.01
+    expected_f = -36
+    assert abs(expected_f - actual_f_primal) < comparison_delta
+    assert abs(expected_f - actual_f_dual) < comparison_delta
 
     c = [2, 3, 0, 0, 0]
     A = [
@@ -476,21 +546,30 @@ def main():
         [3, 2, 0, 0, 1]
     ]
     b = [12, 3, 4]
+    _, f_primal = Simplex(A, b, c, 'max').optimal_solution()
+    _, f_dual = DualSimplex(A, b, c, 'max').optimal_solution()
+    assert 4.75 == f_primal == f_dual
 
-    c11 = [12, -1]
-    A11 = [
+    c = [12, -1]
+    A = [
         [6, -1],
         [2, 5]
     ]
-    b11 = [12, 20]
+    b = [12, 20]
+    _, f_primal = Simplex(A, b, c, 'max').optimal_solution()
+    _, f_dual = DualSimplex(A, b, c, 'max').optimal_solution()
+    assert 27 == f_primal == f_dual
 
-    c12 = [12, -1]
-    A12 = [
+    c = [12, -1]
+    A = [
         [6, -1],
         [2, 5],
         [1, 0]
     ]
-    b12 = [12, 20, 2]
+    b = [12, 20, 2]
+    _, f_primal = Simplex(A, b, c, 'max').optimal_solution()
+    _, f_dual = DualSimplex(A, b, c, 'max').optimal_solution()
+    assert 24 == f_primal == f_dual
 
     # primal_n_dual(A1, b1, c1, 'min')
     # bb_method(A1, b1, c1, 'min')
@@ -507,30 +586,6 @@ def main():
     # bb_method(A12, b12, c12, 'max')
     # bb_method(A11, b11, c11, 'max')
     # integer(A11, b11, c11, 'max')
-    try:
-        simplex_method(A6, b6, c6, 'max')
-    except NoAcceptedSolution as e:
-        print(e)
-        assert True
-    else:
-        assert False
-
-    try:
-        simplex_method(A6, b6, c6, 'max', dual=True)
-    except NoOptimalSolution as e:
-        print(e)
-        assert True
-    else:
-        assert False
-    # primal_n_dual(A3, b3, c3, 'max')
-    # primal_n_dual(A4, b4, c4, 'max')
-    # primal_n_dual(A5, b5, c5, 'max')
-    # primal_n_dual(A7, b7, c7, 'max')
-    # primal_n_dual(A8, b8, c8, 'min')
-    # primal_n_dual(A9, b9, c9, 'max')
-
-    # matrix, F = simplex_init(c, A, b, opt[1])
-    # print_matrix(matrix, F, b)
 
 
 if __name__ == '__main__':
