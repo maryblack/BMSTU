@@ -398,7 +398,20 @@ def integer(A, b, c, opt):
               f"{', '.join(answer)}\nF={F}\n{new_line}")
 
 
-def main():
+def test():
+    def expection_thrown(method_to_call: callable, thrown_exception: Exception) -> bool:
+        """
+        принимает метод без скобочек - иначе будет вызов
+        dозвращает True, если брощенное исключение имеет тип thrown_exception
+        """
+        try:
+            method_to_call()
+        except thrown_exception:
+            return True
+        else:
+            return False
+
+
     c = [-1, 1]
     A = [[1, -2],
          [-2, 1],
@@ -443,40 +456,20 @@ def main():
          [1, 0]
          ]
     b = [10, 20]
-    try:
-        Simplex(A, b, c, 'max').optimal_solution()
-    except NoOptimalSolution as e:
-        print(e)
-        assert True
-    else:
-        assert False
-    try:
-        DualSimplex(A, b, c, 'max').optimal_solution()
-    except NoAcceptedSolution as e:
-        print(e)
-        assert True
-    else:
-        assert False
+    assert expection_thrown(Simplex(A, b, c, 'max').optimal_solution, NoOptimalSolution)
+    assert expection_thrown(DualSimplex(A, b, c, 'max').optimal_solution, NoAcceptedSolution)
+
+
 
     c = [3, 2]  # нет допустимых решений
     A = [[2, 1],
          [-3, -4]
          ]
     b = [2, -12]
-    try:
-        Simplex(A, b, c, 'max').optimal_solution()
-    except NoAcceptedSolution as e:
-        print(e)
-        assert True
-    else:
-        assert False
-    try:
-        DualSimplex(A, b, c, 'max').optimal_solution()
-    except NoOptimalSolution as e:
-        print(e)
-        assert True
-    else:
-        assert False
+    assert expection_thrown(Simplex(A, b, c, 'max').optimal_solution, NoAcceptedSolution)
+    assert expection_thrown(DualSimplex(A, b, c, 'max').optimal_solution, NoOptimalSolution)
+
+
 
     c = [1, 1]  # неограниченное решение
     A = [[-2, -2],
@@ -484,22 +477,8 @@ def main():
          [1, -1],
          ]
     b = [-1, 1, 1]
-    try:
-        Simplex(A, b, c, 'max').optimal_solution()
-    except NoOptimalSolution as e:
-        print(e)
-        assert True
-    else:
-        assert False
-
-
-    try:
-        DualSimplex(A, b, c, 'max').optimal_solution()
-    except NoAcceptedSolution as e:
-        print(e)
-        assert True
-    else:
-        assert False
+    assert expection_thrown(Simplex(A, b, c, 'max').optimal_solution, NoOptimalSolution)
+    assert expection_thrown(DualSimplex(A, b, c, 'max').optimal_solution, NoAcceptedSolution)
 
 
     c = [1, -2]  # неограниченное решение
@@ -507,22 +486,8 @@ def main():
          [1, -2]
          ]
     b = [-1, 4]
-    try:
-        Simplex(A, b, c, 'min').optimal_solution()
-    except NoOptimalSolution as e:
-        print(e)
-        assert True
-    else:
-        assert False
-
-
-    try:
-        DualSimplex(A, b, c, 'min').optimal_solution()
-    except NoAcceptedSolution as e:
-        print(e)
-        assert True
-    else:
-        assert False
+    assert expection_thrown(Simplex(A, b, c, 'min').optimal_solution, NoOptimalSolution)
+    assert expection_thrown(DualSimplex(A, b, c, 'min').optimal_solution, NoAcceptedSolution)
 
 
 
@@ -587,6 +552,10 @@ def main():
     # bb_method(A11, b11, c11, 'max')
     # integer(A11, b11, c11, 'max')
 
+def main():
+    pass
+
 
 if __name__ == '__main__':
+    test()
     main()
