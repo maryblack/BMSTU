@@ -3,7 +3,7 @@ from typing import Optional
 import pandas as pd
 import numpy as np
 from copy import deepcopy
-from itertools import permutations
+
 
 
 class NoAcceptedSolution(Exception):
@@ -336,26 +336,33 @@ def bb_method(A, b, c, opt):
 
 
 def integer_answer(b):
+    res = []
     for i in range(len(b)):
         if b[i] % 1 != 0:
-            return False, i, b[i]
-    return True, 0, b[-1]
+            res.append(i)
+    if len(res) == 0:
+        return True, res
+    return False, res
 
 
-def bb(A, b, c, opt):
+def bb(A, b, c, opt) -> Optional[float]:
     solution = Simplex(A, b, c, opt)
-    answer, _ = solution.optimal_solution()
-    if answer == -1:
-        print(f'Неограниченное решение!')
-        return -1
-    elif answer == -2:
-        print(f'Допустимых решений нет!')
-        return -1
-    cond, ind, value = integer_answer(answer)
+    try:
+        answer, F = solution.optimal_solution()
+        cond, ind = integer_answer(answer)
+    except NoAcceptedSolution:
+        return None
+
+    except NoOptimalSolution:
+        return None
+
+    # cond, ind = integer_answer(answer)
     if cond:
         print(f'Целочисленное решение найдено:\n{solution.print_answer()}')
-        return 0
+        return F
     else:
+        value = answer[ind[0]]
+
         val_r = round(value)
         a_new = np.zeros(len(A[0]))
         if val_r > value:
@@ -364,18 +371,32 @@ def bb(A, b, c, opt):
         else:
             val_gr = val_r + 1
             val_ls = val_r
+
+        print('\nВетка 1\n')
         b_1 = deepcopy(b)
-        b_1.append(-val_ls)
-        a_new[ind] = -1
+        b_1.append(val_ls)
+        a_new[ind[0]] = 1
         A_1 = deepcopy(A)
         A_1.append(list(a_new))
-        bb(A_1, b_1, c, opt)
-        # b_2 = deepcopy(b)
-        # b_2.append(val_gr)
-        # a_new[ind] = 1
-        # A_2 = deepcopy(A)
-        # A_2.append(list(a_new))
-        # bb(A_2, b_2, c, opt)
+        F1 = bb(A_1, b_1, c, opt)
+
+        print('\nВетка 2\n')
+        b_2 = deepcopy(b)
+        b_2.append(-val_gr)
+        a_new[ind[0]] = -1
+        A_2 = deepcopy(A)
+        A_2.append(list(a_new))
+        F2 = bb(A_2, b_2, c, opt)
+
+        if F1 is None and F2 is None:
+            return None
+        elif F1 is None and F2 is not None:
+            return F2
+        elif F2 is None and F1 is not None:
+            return F1
+        else:
+            return max(F1, F2)
+
 
 
 def integer(A, b, c, opt):
@@ -431,6 +452,7 @@ def test():
     _, f_primal = Simplex(A, b, c, 'max').optimal_solution()
     _, f_dual = DualSimplex(A, b, c, 'max').optimal_solution()
     assert 13.0 == f_primal == f_dual
+    #bb_method(A,b,c,'max')
 
     c = [5, 3, 8]  # 16 вариант
     A = [[2, 1, 1],
@@ -524,6 +546,8 @@ def test():
     _, f_primal = Simplex(A, b, c, 'max').optimal_solution()
     _, f_dual = DualSimplex(A, b, c, 'max').optimal_solution()
     assert 27 == f_primal == f_dual
+    integer(A, b, c, 'max')
+    bb_method(A, b, c, 'max')
 
     c = [12, -1]
     A = [
@@ -557,5 +581,11 @@ def main():
 
 
 if __name__ == '__main__':
-    test()
-    main()
+    # test()
+    c = [12, -1]
+    A = [
+        [6, -1],
+        [2, 5]
+    ]
+    b = [12, 20]
+    bb_method(A, b, c, 'max')
