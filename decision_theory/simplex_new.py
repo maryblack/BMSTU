@@ -3,6 +3,17 @@ from typing import Optional
 import pandas as pd
 import numpy as np
 from copy import deepcopy
+from itertools import combinations
+
+
+def all_combinations(items: list):
+    comb = []
+    for i in range(len(items)+1):
+        comb.extend(list(combinations(items, i)))
+
+    comb = list(map(lambda tpl: list(tpl), comb))
+    comb = list(filter(lambda lst: []!= lst, comb))
+    return comb
 
 
 
@@ -350,10 +361,12 @@ def bb(A, b, c, opt) -> Optional[float]:
     try:
         answer, F = solution.optimal_solution()
         cond, ind = integer_answer(answer)
-    except NoAcceptedSolution:
+    except NoAcceptedSolution as e:
+        print(e)
         return None
 
-    except NoOptimalSolution:
+    except NoOptimalSolution as e:
+        print(e)
         return None
 
     # cond, ind = integer_answer(answer)
@@ -361,41 +374,50 @@ def bb(A, b, c, opt) -> Optional[float]:
         print(f'Целочисленное решение найдено:\n{solution.print_answer()}')
         return F
     else:
-        value = answer[ind[0]]
+        F_vars = []
+        # non_int = all_combinations(ind)
+        for i in range(len(ind)):
+            value = answer[ind[i]]
 
-        val_r = round(value)
-        a_new = np.zeros(len(A[0]))
-        if val_r > value:
-            val_gr = val_r
-            val_ls = val_r - 1
-        else:
-            val_gr = val_r + 1
-            val_ls = val_r
+            val_r = round(value)
+            a_new = np.zeros(len(A[0]))
+            if val_r > value:
+                val_gr = val_r
+                val_ls = val_r - 1
+            else:
+                val_gr = val_r + 1
+                val_ls = val_r
 
-        print('\nВетка 1\n')
-        b_1 = deepcopy(b)
-        b_1.append(val_ls)
-        a_new[ind[0]] = 1
-        A_1 = deepcopy(A)
-        A_1.append(list(a_new))
-        F1 = bb(A_1, b_1, c, opt)
+            print('\nВетка 1\n')
+            b_1 = deepcopy(b)
+            b_1.append(val_ls)
+            a_new[ind[i]] = 1
+            A_1 = deepcopy(A)
+            A_1.append(list(a_new))
+            F1 = bb(A_1, b_1, c, opt)
 
-        print('\nВетка 2\n')
-        b_2 = deepcopy(b)
-        b_2.append(-val_gr)
-        a_new[ind[0]] = -1
-        A_2 = deepcopy(A)
-        A_2.append(list(a_new))
-        F2 = bb(A_2, b_2, c, opt)
+            print('\nВетка 2\n')
+            b_2 = deepcopy(b)
+            b_2.append(-val_gr)
+            a_new[ind[i]] = -1
+            A_2 = deepcopy(A)
+            A_2.append(list(a_new))
+            F2 = bb(A_2, b_2, c, opt)
 
-        if F1 is None and F2 is None:
+            F_vars.extend([F1, F2])
+
+        if all(el is None for el in F_vars):
             return None
-        elif F1 is None and F2 is not None:
-            return F2
-        elif F2 is None and F1 is not None:
-            return F1
-        else:
-            return max(F1, F2)
+
+        max = -9999999
+
+        for el in F_vars:
+            if el is not None and el > max:
+                max = el
+
+        return max
+
+
 
 
 
@@ -582,10 +604,18 @@ def main():
 
 if __name__ == '__main__':
     # test()
-    c = [12, -1]
-    A = [
-        [6, -1],
-        [2, 5]
-    ]
-    b = [12, 20]
+    # c = [12, -1]
+    # A = [
+    #     [6, -1],
+    #     [2, 5]
+    # ]
+    # b = [12, 20]
+    print(all_combinations([1,2,3]))
+
+    c = [7, 5, 3]  # 10 вариант
+    A = [[4, 1, 1],
+         [1, 2, 0],
+         [0, 0.5, 1]
+         ]
+    b = [4, 3, 2]
     bb_method(A, b, c, 'max')
