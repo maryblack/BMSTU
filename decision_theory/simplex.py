@@ -1,3 +1,5 @@
+from typing import Optional
+
 import pandas as pd
 import numpy as np
 from copy import deepcopy
@@ -443,18 +445,19 @@ def main():
     ]
     b11 = [12, 20]
 
-    # primal_n_dual(A1, b1, c1, 'min')
-    primal_n_dual(A, b, c, 'max')
-    integer(A, b, c, 'max')
-
-    primal_n_dual(A2, b2, c2, 'max')
-    integer(A2, b2, c2, 'max')
+    primal_n_dual(A1, b1, c1, 'min')
+    # primal_n_dual(A, b, c, 'max')
+    # integer(A, b, c, 'max')
     #
-    primal_n_dual(A11, b11, c11, 'max')
-    integer(A11, b11, c11, 'max')
+    # primal_n_dual(A2, b2, c2, 'max')
+    # integer(A2, b2, c2, 'max')
+
+    # primal_n_dual(A11, b11, c11, 'max')
+    # integer(A11, b11, c11, 'max')
     # primal_n_dual(A6, b6, c6, 'max')
     # primal_n_dual(A3, b3, c3, 'max')
     # primal_n_dual(A4, b4, c4, 'max')
+    # integer(A4, b4, c4, 'max')
     # primal_n_dual(A5, b5, c5, 'max')
     # primal_n_dual(A7, b7, c7, 'max')
     # primal_n_dual(A8, b8, c8, 'min')

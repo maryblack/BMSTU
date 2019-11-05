@@ -340,7 +340,8 @@ def column(matrix, j):
 def bb_method(A, b, c, opt):
     new_line = '=' * 30
     print("Решение прямой задачи методом ветвей и границ:")
-    answer = bb(A, b, c, opt)
+    # answer = bb(A, b, c, opt)
+    answer = bb1(A, b, c, opt)
     if answer == 0:
         pass
     print(new_line)
@@ -357,6 +358,69 @@ def integer_answer(b):
 
 
 def bb(A, b, c, opt) -> Optional[float]:
+    solution = Simplex(A, b, c, opt)
+    try:
+        answer, F = solution.optimal_solution()
+        cond, ind = integer_answer(answer)
+    except NoAcceptedSolution as e:
+        print(e)
+        return None
+
+    except NoOptimalSolution as e:
+        print(e)
+        return None
+
+    # cond, ind = integer_answer(answer)
+    if cond:
+        print(f'Целочисленное решение найдено:\n{solution.print_answer()}')
+        return F
+    else:
+        F_vars = []
+        # non_int = all_combinations(ind)
+        for i in range(len(ind)):
+            value = answer[ind[i]]
+
+            val_r = round(value)
+            a_new = np.zeros(len(A[0]))
+            if val_r > value:
+                val_gr = val_r
+                val_ls = val_r - 1
+            else:
+                val_gr = val_r + 1
+                val_ls = val_r
+
+            print('\nВетка 1\n')
+            b_1 = deepcopy(b)
+            b_1.append(val_ls)
+            a_new[ind[i]] = 1
+            A_1 = deepcopy(A)
+            A_1.append(list(a_new))
+            F1 = bb(A_1, b_1, c, opt)
+
+            print('\nВетка 2\n')
+            b_2 = deepcopy(b)
+            b_2.append(-val_gr)
+            a_new[ind[i]] = -1
+            A_2 = deepcopy(A)
+            A_2.append(list(a_new))
+            F2 = bb(A_2, b_2, c, opt)
+
+            F_vars.extend([F1, F2])
+
+        if all(el is None for el in F_vars):
+            return None
+
+        max = -9999999
+
+        for el in F_vars:
+            if el is not None and el > max:
+                max = el
+
+        return max
+
+
+
+def bb1(A, b, c, opt) -> Optional[float]:
     solution = Simplex(A, b, c, opt)
     try:
         answer, F = solution.optimal_solution()
@@ -602,6 +666,57 @@ def main():
     pass
 
 
+def player_A(M):
+    A = np.negative(np.array(M).T)
+    n, m = A.shape
+    c = np.ones(m)
+    b = np.negative(np.ones(n))
+    sol = Simplex(A, b, c, 'min')
+    b_0, W = sol.optimal_solution()
+
+    u = np.zeros(m)
+    for i, value in enumerate(sol.basis):
+        if value < m:
+            u[value] = b_0[i]
+
+    return u/W
+
+
+
+def player_B(M):
+    n, m = np.array(M).shape
+    c = np.ones(m)
+    b = np.ones(n)
+    sol = Simplex(M, b, c, 'max')
+    b_0, Z = sol.optimal_solution()
+    v = np.zeros(m)
+    for i, value in enumerate(sol.basis):
+        if value < m:
+            v[value] = b_0[i]
+
+    return v/Z
+
+
+def matrix_game():
+    M = [
+        [12, 6, 3, 17, 9],
+        [0, 5, 16, 0, 15],
+        [16, 19, 12, 18, 11],
+        [19, 12, 7, 2, 13]
+    ]
+
+    # M = [[1, 3, 9, 6],
+    #     [2, 6, 2, 3],
+    #     [7, 2, 6, 5]]
+
+    strategy_probability_A = player_A(M)
+    strategy_probability_B  = player_B(M)
+    print(strategy_probability_A)
+    print(strategy_probability_B)
+
+
+
+
 if __name__ == '__main__':
     # test()
     # c = [12, -1]
@@ -610,12 +725,13 @@ if __name__ == '__main__':
     #     [2, 5]
     # ]
     # b = [12, 20]
-    print(all_combinations([1,2,3]))
+    # print(all_combinations([0,1,2]))
 
-    c = [7, 5, 3]  # 10 вариант
-    A = [[4, 1, 1],
-         [1, 2, 0],
-         [0, 0.5, 1]
-         ]
-    b = [4, 3, 2]
-    bb_method(A, b, c, 'max')
+    # c = [7, 5, 3]  # 10 вариант
+    # A = [[4, 1, 1],
+    #      [1, 2, 0],
+    #      [0, 0.5, 1]
+    #      ]
+    # b = [4, 3, 2]
+    # bb_method(A, b, c, 'max')
+    matrix_game()
