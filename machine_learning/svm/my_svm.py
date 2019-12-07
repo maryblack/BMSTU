@@ -116,6 +116,7 @@ def main():
     a_x = clf.predict(X)
     lambdas = find_lambda(X, y)
     data_plot(X, y, a_x, lambdas)
+    # plt.savefig('res.jpg')
     plt.show()
 
 
