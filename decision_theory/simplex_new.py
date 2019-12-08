@@ -605,8 +605,8 @@ def player_A(M):
     c = np.ones(m)
     b = np.negative(np.ones(n))
     sol = Simplex(A, b, c, 'min')
-    b_0, W = sol.optimal_solution()
-
+    b_0, solution = sol.optimal_solution()
+    W = solution['F']
     u = np.zeros(m)
     for i, value in enumerate(sol.basis):
         if value < m:
@@ -621,7 +621,8 @@ def player_B(M):
     c = np.ones(m)
     b = np.ones(n)
     sol = Simplex(M, b, c, 'max')
-    b_0, Z = sol.optimal_solution()
+    b_0, solution = sol.optimal_solution()
+    Z = solution['F']
     v = np.zeros(m)
     for i, value in enumerate(sol.basis):
         if value < m:
@@ -642,10 +643,16 @@ def matrix_game():
     #     [2, 6, 2, 3],
     #     [7, 2, 6, 5]]
 
+    print('Оптимальная смешанная стратегия игрока А')
     strategy_probability_A = player_A(M)
-    strategy_probability_B  = player_B(M)
     print(strategy_probability_A)
+    print(f'Сумма вероятностей: {round(np.sum(strategy_probability_A), 2)}')
+    print('='*30)
+
+    print('Оптимальная смешанная стратегия игрока B')
+    strategy_probability_B = player_B(M)
     print(strategy_probability_B)
+    print(f'Сумма вероятностей: {round(np.sum(strategy_probability_B),2)}')
 
 
 
@@ -667,13 +674,13 @@ if __name__ == '__main__':
     #      ]
     # b = [4, 6, 2]
 
-    c = [5, 3, 8]  # 16 вариант
-    A = [[2, 1, 1],
-         [1, 1, 0],
-         [0, 0.5, 2]
-         ]
-    b = [3, 6, 3]
-
-    bb_method(A, b, c, 'max')
-    integer(A, b, c, 'max')
-    # matrix_game()
+    # c = [5, 3, 8]  # 16 вариант
+    # A = [[2, 1, 1],
+    #      [1, 1, 0],
+    #      [0, 0.5, 2]
+    #      ]
+    # b = [3, 6, 3]
+    #
+    # bb_method(A, b, c, 'max')
+    # integer(A, b, c, 'max')
+    matrix_game()
