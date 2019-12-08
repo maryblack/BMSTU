@@ -155,14 +155,13 @@ class Simplex:
         else:
             raise NoAcceptedSolution()
 
-    def optimal_solution(self) -> (list, float):
+    def optimal_solution(self) -> (list, dict):
         accepted_solution = self.accept_solution()
         new_line = '=' * 30
         print("Опорное решение:")
         print(self.print_answer())
         print("Оптимальное решение:")
         no_col = self.no_col()
-        iter = 0
         ind_sol = 0
         ind_break = 0
         no_init = no_col
@@ -175,6 +174,8 @@ class Simplex:
             if r < len(self.b) + 1:
                 # k = self.a_solving_row(no_col)
                 ind_break = self.change_basis(r, no_col, ind_sol)
+                # print('basis changed')
+                # print(self.print_answer())
                 no_col = self.no_col()
                 # r = self.a_solving_row(no_col)
                 ind_sol += 1
@@ -185,14 +186,14 @@ class Simplex:
         b_0 = column(self.matrix, 0)[:-1]
         check = 0
         for i in range(len(b_0)):
-            if b_0[i] < 0:
+            if b_0[i] < 0 and self.basis[i] < len(b_0):
                 check += 1
 
         if (check != 0) or ((ind_break == -1 or r == -1) and (no_init != len(self.c) + 1)):
             raise NoOptimalSolution()
         else:
             print(self.print_answer())
-            return b_0, self.get_f()
+            return b_0, self.get_answer()
 
     def na_row(self):
         b_0 = column(self.matrix, 0)[:-1]
@@ -279,29 +280,24 @@ class Simplex:
         # print(f'b вектор: {res}')
         return True
 
-    def print_answer(self):
-        new_line = '=' * 30
-        if self.d:
-            var = 'y'
-        else:
-            var = 'x'
-        free_str = [f'{var}{el + 1}' for el in self.free]
-        basis_str = [f'{var}{el + 1}' for el in self.basis]
+    def get_answer(self) -> dict:
+        solution = {}
+        basis_str = [f'x{el + 1}' for el in self.basis]
         b_0 = column(self.matrix, 0)[:-1]
-        F = self.get_f()
-        solution = []
         for i in range(len(basis_str)):
-            sol = f'{basis_str[i]}={b_0[i]}'
-            solution.append(sol)
-        answer = f"{', '.join(free_str)}=0\n" \
-            f"{', '.join(solution)}\nF={F}"
-        return answer
+            solution[f'{basis_str[i]}'] = b_0[i]
+
+        solution['F'] = self.get_f()
+        return solution
+
+    def print_answer(self):
+        return self.get_answer()
 
     def get_f(self) -> float:
         if self.opt == 'min':
-            return column(self.matrix, 0)[-1]
+            return round(column(self.matrix, 0)[-1],3)
         else:
-            return - column(self.matrix, 0)[-1]
+            return - round(column(self.matrix, 0)[-1],3)
 
 
 class DualSimplex(Simplex):
@@ -340,28 +336,31 @@ def column(matrix, j):
 def bb_method(A, b, c, opt):
     new_line = '=' * 30
     print("Решение прямой задачи методом ветвей и границ:")
-    # answer = bb(A, b, c, opt)
-    answer = bb1(A, b, c, opt)
+    answer = bb(A, b, c, opt)
+    print('Итоговое решение')
+    print(answer)
+    # answer = bb1(A, b, c, opt)
     if answer == 0:
         pass
     print(new_line)
 
-
-def integer_answer(b):
+# FIXME здесь надо проверять на нецелочисленность только те иксы, которые присутствуют в функции,
+#  а не вообще все
+def non_integer_answer_index(b, basis):
     res = []
     for i in range(len(b)):
-        if b[i] % 1 != 0:
+        if b[i] % 1 != 0 and basis[i] < len(b):
             res.append(i)
     if len(res) == 0:
-        return True, res
-    return False, res
+        return None
+    return res
 
 
-def bb(A, b, c, opt) -> Optional[float]:
-    solution = Simplex(A, b, c, opt)
+def bb(A, b, c, opt) -> Optional[dict]:
+    simplex = Simplex(A, b, c, opt)
     try:
-        answer, F = solution.optimal_solution()
-        cond, ind = integer_answer(answer)
+        answer, solution = simplex.optimal_solution()
+        ind = non_integer_answer_index(answer, simplex.basis)
     except NoAcceptedSolution as e:
         print(e)
         return None
@@ -371,116 +370,50 @@ def bb(A, b, c, opt) -> Optional[float]:
         return None
 
     # cond, ind = integer_answer(answer)
-    if cond:
-        print(f'Целочисленное решение найдено:\n{solution.print_answer()}')
-        return F
+    if ind is None:
+        # print(f'Целочисленное решение найдено:\n{solution.print_answer()}')
+        return solution
     else:
-        F_vars = []
-        # non_int = all_combinations(ind)
-        for i in range(len(ind)):
-            value = answer[ind[i]]
+        value = answer[ind[0]]
 
-            val_r = round(value)
-            a_new = np.zeros(len(A[0]))
-            if val_r > value:
-                val_gr = val_r
-                val_ls = val_r - 1
-            else:
-                val_gr = val_r + 1
-                val_ls = val_r
+        val_r = round(value)
+        a_new = np.zeros(len(A[0]))
+        if val_r > value:
+            val_gr = val_r
+            val_ls = val_r - 1
+        else:
+            val_gr = val_r + 1
+            val_ls = val_r
 
-            print('\nВетка 1\n')
-            b_1 = deepcopy(b)
-            b_1.append(val_ls)
-            a_new[ind[i]] = 1
-            A_1 = deepcopy(A)
-            A_1.append(list(a_new))
-            F1 = bb(A_1, b_1, c, opt)
+        print('\nВетка 1\n')
+        b_1 = deepcopy(b)
+        b_1.append(val_ls)
+        a_new[ind[0]] = 1
+        A_1 = deepcopy(A)
+        A_1.append(list(a_new))
+        solution1 = bb(A_1, b_1, c, opt)
+        F1 = solution1['F']
 
-            print('\nВетка 2\n')
-            b_2 = deepcopy(b)
-            b_2.append(-val_gr)
-            a_new[ind[i]] = -1
-            A_2 = deepcopy(A)
-            A_2.append(list(a_new))
-            F2 = bb(A_2, b_2, c, opt)
+        print('\nВетка 2\n')
+        b_2 = deepcopy(b)
+        b_2.append(-val_gr)
+        a_new[ind[0]] = -1
+        A_2 = deepcopy(A)
+        A_2.append(list(a_new))
+        solution2 = bb(A_2, b_2, c, opt)
+        F2 = solution2['F']
 
-            F_vars.extend([F1, F2])
-
-        if all(el is None for el in F_vars):
+        if F1 is None and F2 is None:
             return None
-
-        max = -9999999
-
-        for el in F_vars:
-            if el is not None and el > max:
-                max = el
-
-        return max
-
-
-
-def bb1(A, b, c, opt) -> Optional[float]:
-    solution = Simplex(A, b, c, opt)
-    try:
-        answer, F = solution.optimal_solution()
-        cond, ind = integer_answer(answer)
-    except NoAcceptedSolution as e:
-        print(e)
-        return None
-
-    except NoOptimalSolution as e:
-        print(e)
-        return None
-
-    # cond, ind = integer_answer(answer)
-    if cond:
-        print(f'Целочисленное решение найдено:\n{solution.print_answer()}')
-        return F
-    else:
-        F_vars = []
-        # non_int = all_combinations(ind)
-        for i in range(len(ind)):
-            value = answer[ind[i]]
-
-            val_r = round(value)
-            a_new = np.zeros(len(A[0]))
-            if val_r > value:
-                val_gr = val_r
-                val_ls = val_r - 1
+        elif F1 is None and F2 is not None:
+            return solution2
+        elif F2 is None and F1 is not None:
+            return solution1
+        else:
+            if F1 > F2:
+                return solution1
             else:
-                val_gr = val_r + 1
-                val_ls = val_r
-
-            print('\nВетка 1\n')
-            b_1 = deepcopy(b)
-            b_1.append(val_ls)
-            a_new[ind[i]] = 1
-            A_1 = deepcopy(A)
-            A_1.append(list(a_new))
-            F1 = bb(A_1, b_1, c, opt)
-
-            print('\nВетка 2\n')
-            b_2 = deepcopy(b)
-            b_2.append(-val_gr)
-            a_new[ind[i]] = -1
-            A_2 = deepcopy(A)
-            A_2.append(list(a_new))
-            F2 = bb(A_2, b_2, c, opt)
-
-            F_vars.extend([F1, F2])
-
-        if all(el is None for el in F_vars):
-            return None
-
-        max = -9999999
-
-        for el in F_vars:
-            if el is not None and el > max:
-                max = el
-
-        return max
-
+                return solution2
 
 
 
@@ -727,11 +660,20 @@ if __name__ == '__main__':
     # b = [12, 20]
     # print(all_combinations([0,1,2]))
 
-    # c = [7, 5, 3]  # 10 вариант
-    # A = [[4, 1, 1],
+    # c = [2, 8, 3]  # 10 вариант
+    # A = [[2, 1, 1],
     #      [1, 2, 0],
     #      [0, 0.5, 1]
     #      ]
-    # b = [4, 3, 2]
-    # bb_method(A, b, c, 'max')
-    matrix_game()
+    # b = [4, 6, 2]
+
+    c = [5, 3, 8]  # 16 вариант
+    A = [[2, 1, 1],
+         [1, 1, 0],
+         [0, 0.5, 2]
+         ]
+    b = [3, 6, 3]
+
+    bb_method(A, b, c, 'max')
+    integer(A, b, c, 'max')
+    # matrix_game()
