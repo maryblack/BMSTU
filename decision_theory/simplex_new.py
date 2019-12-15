@@ -671,5 +671,5 @@ if __name__ == '__main__':
     bb_method(A, b, c, 'max')
     integer(A, b, c, 'max')
 
-    print('Лабораторная №6: Матричная игра')
+    print('Лабораторная №5: Матричная игра')
     matrix_game()
