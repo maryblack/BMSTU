@@ -9,20 +9,25 @@ class StohMatrix:
         self.A = np.zeros((N, N))
         self.generate()
         self.init_opinions = np.random.randint(19, size=N) + 1
-        self.infl_opinions = np.random.randint(19, size=N) + 1
+        self.infl_opinions = self.init_opinions
 
     def generate(self):
         N = self.size
         iter = 0
+        # заполняем матрицу (N-1) на (N-1) случайными числами, деление на 5, чтобы числа были меньше
         for i in range(N - 1):
             for j in range(N - 1):
                 self.A[i, j] = round(random.random() / 5, 3)
 
+        # последний элемент строки = 1 - сумма остальных элементов
         for i in range(N - 1):
             self.A[i, N - 1] = round(1 - np.sum(self.A[i, :N - 1]), 3)
-
+        # последний элемент столбца = 1 - сумма остальных элементов
         for j in range(N):
             self.A[N - 1, j] = round(1 - np.sum(self.A[:N - 1, j]), 3)
+
+        # могут получаться отрицательные значения, поэтому проверяем знак матрицы
+        # нужно, чтобы все были больше 0
         while np.sign(np.min(self.A)) < 0:
             for i in range(N - 1):
                 for j in range(N - 1):
