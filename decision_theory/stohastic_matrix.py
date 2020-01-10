@@ -48,13 +48,14 @@ class StohMatrix:
         curr = np.dot(self.A, opinions)
         delta = np.abs(curr - opinions)
         while len(np.where(delta < eps)[0]) != N:
+            print(f'Итерация {iter+1}, вектор {curr}' )
             pred = curr.copy()
             curr = np.dot(self.A, pred)
             delta = np.abs(curr - pred)
             iter+=1
 
         print(f'Изначальные мнения агентов:{opinions}')
-        print(f'Потребовалось итераций:{iter}')
+        print(f'Потребовалось итераций:{iter+1}')
         print(f'Результирующее мнение агентов:{np.round(curr,3)}')
 
     def influence(self):
@@ -86,7 +87,7 @@ class StohMatrix:
 
 
 def main():
-    M1 = StohMatrix(10)
+    M1 = StohMatrix(3)
     df = pd.DataFrame(M1.A)
     print(df)
     print('\n')
