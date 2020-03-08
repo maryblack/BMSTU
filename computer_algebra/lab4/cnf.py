@@ -140,6 +140,8 @@ class Formula(AbstractFormula):
             self.negated = False
             if b == 0:
                 b = 1
+            elif b == 1:
+                b = 0
         # законы де Моргана
         for i, arg in enumerate(self.args):
             curr = copy.deepcopy(arg)
@@ -156,7 +158,6 @@ class Formula(AbstractFormula):
 
         elif b==0 and self.symbol == Symbol.DISJUNCTION:
             self.symbol = Symbol.DISJUNCTION
-
         return self
 
 
@@ -180,9 +181,10 @@ if __name__ == '__main__':
     d = Var('d')
     e = Var('e')
     f = Var('f')
-    # res = ((a + d + b) * -c) % (d >> e >> f)
-    res = -(--a * b)
+    res = ((a + d + b) * -c) % (d >> e >> f)
+    # res = -(--a * b) # пример с лекции
+    # res = -(b + c) * -d
     print(res)
     res_ONF = res.toONF()
     print(res_ONF)
-    print(12)
+
