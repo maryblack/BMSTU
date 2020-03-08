@@ -20,7 +20,7 @@ class Var(AbstractFormula):
         IND_COUNT += 1
 
     def __add__(self, other):
-        if isinstance(other, Formula) and other.symbol==Symbol.DISJUNCTION:
+        if isinstance(other, Formula) and other.symbol == Symbol.DISJUNCTION:
             other.args.append(self)
             other.sortArgs()
             return other
@@ -28,7 +28,7 @@ class Var(AbstractFormula):
         return Formula(Symbol.DISJUNCTION, args=[self, other])
 
     def __mul__(self, other):
-        if isinstance(other, Formula) and other.symbol==Symbol.CONJUNCTION:
+        if isinstance(other, Formula) and other.symbol == Symbol.CONJUNCTION:
             other.args.append(self)
             other.sortArgs()
             return other
@@ -53,8 +53,16 @@ class Var(AbstractFormula):
             return '-' + self.name
         return self.name
 
-    def __repr__(self): return self.__str__()
+    def __repr__(self):
+        return self.__str__()
 
+    def toONF(self, b):
+        if b==1:
+            if self.negated:
+                self.negated = False
+            else:
+                self.negated = True
+        return self
 
 
 class Symbol(Enum):
@@ -125,8 +133,32 @@ class Formula(AbstractFormula):
         if self.symbol == Symbol.IMPLICATION:
             self.symbol = Symbol.DISJUNCTION
             self.args = [-left, right]
-
         self.sortArgs()
+
+    def toONF(self, b=0):  # N[fi](b) по определению начинаем с b==0
+        if self.negated:  # проброс отрицания вниз по синтаксическому дереву N[-fi](b) = N[fi](-b)
+            self.negated = False
+            if b == 0:
+                b = 1
+        # законы де Моргана
+        for i, arg in enumerate(self.args):
+            curr = copy.deepcopy(arg)
+            self.args[i] = curr.toONF(b)
+
+        if b==1 and self.symbol == Symbol.CONJUNCTION:
+            self.symbol = Symbol.DISJUNCTION
+
+        elif b==0 and self.symbol == Symbol.CONJUNCTION:
+            self.symbol = Symbol.CONJUNCTION
+
+        elif b==1 and self.symbol == Symbol.DISJUNCTION:
+            self.symbol = Symbol.CONJUNCTION
+
+        elif b==0 and self.symbol == Symbol.DISJUNCTION:
+            self.symbol = Symbol.DISJUNCTION
+
+        return self
+
 
     def __str__(self):
         if self.negated:
@@ -138,11 +170,7 @@ class Formula(AbstractFormula):
             res += str(el) + ' '
         if self.negated:
             res += ')'
-        return res[:len(res)-1] + ')'
-
-
-
-
+        return res[:len(res) - 1] + ')'
 
 
 if __name__ == '__main__':
@@ -153,6 +181,8 @@ if __name__ == '__main__':
     e = Var('e')
     f = Var('f')
     # res = ((a + d + b) * -c) % (d >> e >> f)
-    res = -a * (f * c)
+    res = -(--a * b)
     print(res)
+    res_ONF = res.toONF()
+    print(res_ONF)
     print(12)
