@@ -64,6 +64,9 @@ class Var(AbstractFormula):
                 self.negated = True
         return self
 
+    def toCNF(self):
+        return self
+
 
 class Symbol(Enum):
     CONJUNCTION = '*'
@@ -160,6 +163,31 @@ class Formula(AbstractFormula):
             self.symbol = Symbol.DISJUNCTION
         return self
 
+    def isBasic(self):
+        for el in self.args:
+            if not isinstance(el, Var):
+                return False
+        return True
+
+    def r(self):#заместителей прописать
+        return self
+
+
+    def toCNF(self):
+        R = []
+        if self.isBasic():
+            return self
+        else:
+            for el in self.args:
+                if not isinstance(el, Var):
+                    R.append(Formula(Symbol.EQUIVALENCE, args=[el.r(), el]))
+                else:
+                    pass
+            if len(R)==1 and R[0].symbol==Symbol.CONJUNCTION:
+                return R[0]
+            else:
+                return Formula(Symbol.CONJUNCTION, R)
+
 
     def __str__(self):
         if self.negated:
@@ -173,6 +201,8 @@ class Formula(AbstractFormula):
             res += ')'
         return res[:len(res) - 1] + ')'
 
+    def __repr__(self): return self.__str__()
+
 
 if __name__ == '__main__':
     a = Var('a')
@@ -181,10 +211,15 @@ if __name__ == '__main__':
     d = Var('d')
     e = Var('e')
     f = Var('f')
-    res = ((a + d + b) * -c) % (d >> e >> f)
+    # res = ((a + d + b) * -c) % (d >> e >> f)
     # res = -(--a * b) # пример с лекции
+    res = a + (-b*(c+-d)*e)
     # res = -(b + c) * -d
+    # res = a + b + c
     print(res)
+    print(res.isBasic())
     res_ONF = res.toONF()
+    res_CNF = res_ONF.toCNF()
     print(res_ONF)
+    print(res_CNF)
 
